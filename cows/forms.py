@@ -45,6 +45,12 @@ class UserRegistrationForm(UserCreationForm):
     email = forms.EmailField(required=True)
     first_name = forms.CharField(max_length=100, required=True)
     last_name = forms.CharField(max_length=100, required=True)
+    phone_number = forms.CharField(
+        max_length=15, 
+        required=True, 
+        help_text="Enter phone number (e.g., +254712345678)",
+        widget=forms.TextInput(attrs={'placeholder': '+254...'})
+    )
 
     class Meta:
         model = User
@@ -62,11 +68,15 @@ class FarmSetupForm(forms.ModelForm):
 
 class CowForm(forms.ModelForm):
     class Meta:
+        date_of_birth = forms.DateField(
+        required=False, 
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control-custom'})
+    )
         model = Cow
         fields = ['tag_number', 'name', 'breed', 'color', 'date_of_birth', 'weight_kg',
                   'status', 'mother', 'purchase_date', 'purchase_price', 'photo', 'notes']
         widgets = {
-            'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
+            
             'purchase_date': forms.DateInput(attrs={'type': 'date'}),
             'notes': forms.Textarea(attrs={'rows': 3}),
         }

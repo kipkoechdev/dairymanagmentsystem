@@ -8,6 +8,7 @@ import uuid
 class Farm(models.Model):
     owner = models.OneToOneField(User, on_delete=models.CASCADE, related_name='farm')
     name = models.CharField(max_length=200)
+    phone = models.CharField(max_length=15, help_text="Format: +254712345678")
     location = models.CharField(max_length=300)
     phone = models.CharField(max_length=20)
     email = models.EmailField(blank=True)
@@ -64,7 +65,7 @@ class Cow(models.Model):
     name = models.CharField(max_length=100)
     breed = models.CharField(max_length=50, choices=BREED_CHOICES)
     color = models.CharField(max_length=20, choices=COLOR_CHOICES, default='black_white')
-    date_of_birth = models.DateField()
+    date_of_birth = models.DateField(null=True, blank=True)
     weight_kg = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='heifer')
     mother = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='calves')
@@ -82,6 +83,8 @@ class Cow(models.Model):
         return f"{self.tag_number} - {self.name}"
 
     def age(self):
+        if not self.date_of_birth:
+            return "Unknown"  # Return a string if the date is missing
         today = date.today()
         delta = today - self.date_of_birth
         years = delta.days // 365
@@ -99,8 +102,8 @@ class Cow(models.Model):
             return last_insem.insemination_date + timedelta(days=21)
         if not self.inseminations.exists():
             # First time — recommend when cow is 15 months old (450 days)
-            return self.date_of_birth + timedelta(days=450)
-        return None
+            # return self.date_of_birth + timedelta(days=450)
+            return None
 
     def expected_delivery_date(self):
         last_successful = self.inseminations.filter(is_successful=True).order_by('-insemination_date').first()

@@ -1,3 +1,6 @@
+from celery.schedules import crontab
+# Ensure there isn't a conflict. If the above still fails, use:
+from celery.schedules import crontab as celery_crontab
 import os
 from pathlib import Path
 
@@ -61,7 +64,7 @@ WSGI_APPLICATION = 'dairy_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'dairy_farm',
+        'NAME': 'salron_dairy',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': '127.0.0.1',
@@ -96,15 +99,24 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 LOGIN_URL = '/accounts/login/'
+# settings.py
 
-# Africa's Talking SMS Configuration
-AFRICASTALKING_USERNAME = 'kwecha'
-AFRICASTALKING_API_KEY = 'atsk_9d226d0f2f07898bab6ba69c728ac032614ba8aab5f81b719d6ba0ed41dfc162785fc11c'
-AFRICASTALKING_SENDER_ID = 'Dairy'
+# Twilio Configuration
+TWILIO_ACCOUNT_SID = 'AC47178366f2fead69604045b7a4b49a9b' # From Twilio Dashboard
+TWILIO_AUTH_TOKEN = '353aec3059954e43ed3f3e6ad5784d24'              # From Twilio Dashboard
+TWILIO_WHATSAPP_NUMBER = 'whatsapp:+254784646194'       # Twilio Sandbox Number
+
 
 # Celery Configuration
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
+
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
-CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_BEAT_SCHEDULE = {
+           'send-due-reminders-daily': {
+               'task': 'cows.tasks.send_due_reminders_task',
+               'schedule': crontab(hour=7, minute=0),  # fires at 7:00 AM every day
+           },
+       }
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

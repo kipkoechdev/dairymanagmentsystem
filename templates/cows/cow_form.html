@@ -51,10 +51,10 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label-custom">Date of Birth *</label>
-                            <input type="date" name="date_of_birth" class="form-control-custom"
-                                   value="{{ form.date_of_birth.value|default:'' }}" required>
-                        </div>
+    <label class="form-label-custom">Date of Birth (Optional)</label>
+    <input type="date" name="date_of_birth" class="form-control-custom"
+           value="{{ form.date_of_birth.value|default:'' }}">
+</div>
                         <div class="col-md-6">
                             <label class="form-label-custom">Weight (kg)</label>
                             <input type="number" name="weight_kg" class="form-control-custom" step="0.1"

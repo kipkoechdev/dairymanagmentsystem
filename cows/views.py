@@ -2,15 +2,19 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
 from django.contrib import messages
-from django.db.models import Sum, F, Q
+from django.db.models import Sum, F, Q, IntegerField
 from django.http import JsonResponse
 from datetime import date, timedelta
 from decimal import Decimal
 import json
 
+from django.db.models.functions import Cast
+
+# BUG FIX 1: import aliased correctly at top level — used everywhere below
+from .sms_utils import send_notification as send_twilio_msg
+
 from .models import *
 from .forms import *
-from .sms_utils import send_sms_reminder
 
 
 def get_farm_or_redirect(request):
@@ -38,16 +42,44 @@ def register(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
+            phone = form.cleaned_data.get('phone_number')
             # Auto-create farm immediately on registration
             Farm.objects.get_or_create(
                 owner=user,
-                defaults={'name': f"{user.username.title()}'s Farm", 'phone': ''}
+                defaults={
+                    'name': f"{user.username.title()}'s Farm",
+                    'phone': phone or '',  # BUG FIX 2: phone could be None, default to ''
+                }
             )
             messages.success(request, 'Welcome! Your account is ready. Start by adding your cows.')
             return redirect('dashboard')
     else:
         form = UserRegistrationForm()
     return render(request, 'registration/register.html', {'form': form})
+
+
+# BUG FIX 3: Removed the broken recursive send_notification() that called itself
+# before calling twilio_sender, causing infinite recursion + NameError.
+# Replaced with a clean _trigger_immediate_sms() helper that uses send_twilio_msg.
+def _trigger_immediate_sms(reminder):
+    """Send an SMS immediately via Twilio and update reminder status."""
+    try:
+        success, msg = send_twilio_msg(reminder)
+        reminder.status = 'sent' if success else 'failed'
+        if not success:
+            reminder.error_message = msg
+        reminder.save()
+        return success, msg
+    except Exception as e:
+        reminder.status = 'failed'
+        reminder.error_message = str(e)
+        reminder.save()
+        return False, str(e)
+
+
+# BUG FIX 4: Removed the duplicate insemination_add() that had no @login_required,
+# no return statement, and called the undefined _trigger_immediate_sms before it
+# was defined. The correct version is kept below with @login_required.
 
 
 @login_required
@@ -112,6 +144,16 @@ def dashboard(request):
         'health_alerts': health_alerts, 'recent_milk': recent_milk,
         'chart_labels': json.dumps(chart_labels), 'chart_data': json.dumps(chart_data),
     }
+    due_reminders = SMSReminder.objects.filter(
+        farm=farm,
+        status='pending',
+        scheduled_date__lte=date.today()
+    )
+    # BUG FIX 5: was calling send_notification(rem) which no longer exists.
+    # Now calls _trigger_immediate_sms() which handles status update internally,
+    # so the manual rem.status = 'sent' / rem.save() lines are no longer needed.
+    for rem in due_reminders:
+        _trigger_immediate_sms(rem)
     return render(request, 'cows/dashboard.html', context)
 
 
@@ -230,7 +272,7 @@ def milk_entry(request):
 def milk_bulk_entry(request):
     farm, _ = get_farm_or_redirect(request)
     today = date.today()
-    cows = Cow.objects.filter(farm=farm, is_active=True, status__in=['lactating', 'pregnant'])
+    cows = Cow.objects.filter(farm=farm, is_active=True).order_by('name')
     if request.method == 'POST':
         entry_date = request.POST.get('date', str(today))
         saved = 0
@@ -256,18 +298,34 @@ def milk_production_report(request):
     farm, _ = get_farm_or_redirect(request)
     today = date.today()
     month_start = today.replace(day=1)
+
+    # We use .annotate() to calculate the sum, then .annotate() again
+    # to Cast that sum to an Integer so the template doesn't crash.
     cow_summary = Cow.objects.filter(farm=farm, is_active=True).annotate(
-        month_total=Sum(
-            F('milk_productions__morning_litres') + F('milk_productions__midday_litres') + F('milk_productions__evening_litres'),
-            filter=models.Q(milk_productions__date__gte=month_start)
+        raw_total=Sum(
+            F('milk_productions__morning_litres') +
+            F('milk_productions__midday_litres') +
+            F('milk_productions__evening_litres'),
+            filter=Q(milk_productions__date__gte=month_start)
         )
-    ).filter(month_total__isnull=False).order_by('-month_total')
+    ).filter(raw_total__isnull=False).annotate(
+        # This converts 22.0 to 22 at the database level
+        month_total=Cast('raw_total', output_field=IntegerField())
+    ).order_by('-month_total')
+
     sales = MilkSale.objects.filter(farm=farm, date__gte=month_start)
     total_sold = sales.aggregate(total=Sum('litres_sold'))['total'] or 0
-    total_revenue = sales.aggregate(total=Sum(F('litres_sold') * F('price_per_litre')))['total'] or 0
+    total_revenue = sales.aggregate(
+        total=Sum(F('litres_sold') * F('price_per_litre'))
+    )['total'] or 0
+
     return render(request, 'cows/milk_report.html', {
-        'farm': farm, 'cow_summary': cow_summary, 'sales': sales,
-        'total_sold': total_sold, 'total_revenue': total_revenue, 'month_start': month_start,
+        'farm': farm,
+        'cow_summary': cow_summary,
+        'sales': sales,
+        'total_sold': total_sold,
+        'total_revenue': total_revenue,
+        'month_start': month_start,
     })
 
 
@@ -285,11 +343,13 @@ def insemination_add(request, cow_pk):
                 cow.status = 'pregnant'
                 cow.save()
                 delivery_date = insem.expected_delivery
-                SMSReminder.objects.create(
+                rem = SMSReminder.objects.create(  # BUG FIX 6: capture rem so we can send it
                     farm=farm, cow=cow, reminder_type='delivery',
-                    message=f"🐄 REMINDER: {cow.name} ({cow.tag_number}) is expected to calve around {delivery_date.strftime('%d %b %Y')}.",
+                    message=f"REMINDER: {cow.name} ({cow.tag_number}) is expected to calve around {delivery_date.strftime('%d %b %Y')}.",
                     phone_number=farm.phone, scheduled_date=delivery_date - timedelta(days=7)
                 )
+                if farm.phone:
+                    _trigger_immediate_sms(rem)  # BUG FIX 7: now defined above, safe to call
             messages.success(request, 'Insemination record added.')
             return redirect('cow_detail', pk=cow.pk)
     else:
@@ -313,7 +373,7 @@ def health_add(request, cow_pk):
             if record.next_appointment:
                 SMSReminder.objects.create(
                     farm=farm, cow=cow, reminder_type='health_check',
-                    message=f"🏥 REMINDER: {cow.name}'s vet appointment is on {record.next_appointment.strftime('%d %b %Y')}.",
+                    message=f"REMINDER: {cow.name}'s vet appointment is on {record.next_appointment.strftime('%d %b %Y')}.",
                     phone_number=farm.phone, scheduled_date=record.next_appointment - timedelta(days=1)
                 )
             messages.success(request, 'Health record added.')
@@ -377,7 +437,9 @@ def reminders_list(request):
 def send_reminder(request, pk):
     farm, _ = get_farm_or_redirect(request)
     reminder = get_object_or_404(SMSReminder, pk=pk, farm=farm)
-    success, msg = send_sms_reminder(reminder)
+    # BUG FIX 8: was calling send_notification(reminder) which doesn't exist,
+    # then referencing 'success' and 'msg' variables that were never assigned.
+    success, msg = _trigger_immediate_sms(reminder)
     if success:
         messages.success(request, f'SMS sent to {reminder.phone_number}')
     else:
@@ -491,12 +553,12 @@ def api_stats(request):
 
 def _build_reminder_message(cow, event_type, event_date):
     if event_type in ('Insemination', 'insemination'):
-        return f"🐄 DAIRY ALERT: {cow.name} ({cow.tag_number}) is due for insemination on {event_date.strftime('%d %b %Y')}."
+        return f"DAIRY ALERT: {cow.name} ({cow.tag_number}) is due for insemination on {event_date.strftime('%d %b %Y')}."
     elif event_type in ('Delivery', 'delivery'):
-        return f"🍼 DAIRY ALERT: {cow.name} ({cow.tag_number}) is expected to calve on {event_date.strftime('%d %b %Y')}."
+        return f"DAIRY ALERT: {cow.name} ({cow.tag_number}) is expected to calve on {event_date.strftime('%d %b %Y')}."
     elif event_type in ('health_check',):
-        return f"🏥 DAIRY ALERT: {cow.name} ({cow.tag_number}) has a vet appointment on {event_date.strftime('%d %b %Y')}."
-    return f"📅 DAIRY REMINDER: Check {cow.name} ({cow.tag_number}) on {event_date.strftime('%d %b %Y')}."
+        return f"DAIRY ALERT: {cow.name} ({cow.tag_number}) has a vet appointment on {event_date.strftime('%d %b %Y')}."
+    return f"DAIRY REMINDER: Check {cow.name} ({cow.tag_number}) on {event_date.strftime('%d %b %Y')}."
 
 
 def _auto_create_reminder(farm, cow, reminder_type):

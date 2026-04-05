@@ -67,6 +67,12 @@
                     <div style="font-size:13px;color:var(--text-muted);margin-bottom:10px">
                         {{ cow.get_breed_display }} &bull; {{ cow.age }}
                     </div>
+                    <td>
+                    {% if cow.date_of_birth %}
+                    {{ cow.age }}
+                
+                    {% endif %}
+                    </td>
                     <div style="display:flex;align-items:center;justify-content:space-between">
                         <span class="badge-status badge-{{ cow.status }}">{{ cow.get_status_display }}</span>
                         {% with total=cow.total_milk_this_month %}

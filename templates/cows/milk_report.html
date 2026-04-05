@@ -28,7 +28,11 @@
             <strong>{{ cow.month_total|floatformat:1 }}L</strong>
         </div>
     </td>
-    <td>{{ cow.month_total|floatformat:1|divisibleby:30 }}L</td>
+    {% if cow.month_total|floatformat:"0"|divisibleby:2 %}
+    <tr class="even-row">
+{% else %}
+    <tr class="odd-row">
+{% endif %}
 </tr>
 {% endfor %}
 </tbody>
