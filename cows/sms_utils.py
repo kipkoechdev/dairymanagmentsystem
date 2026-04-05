@@ -16,8 +16,7 @@ def send_notification(reminder):
     
     # 3. Get Credentials from settings
     # Make sure these are in your settings.py!
-    account_sid = getattr(settings, 'TWILIO_ACCOUNT_SID', 'AC47178366f2fead69604045b7a4b49a9b')
-    auth_token  = getattr(settings, 'TWILIO_AUTH_TOKEN',  '353aec3059954e43ed3f3e6ad5784d24')
+   
     
     # Twilio Sandbox number (replace with your specific one if different)
     from_whatsapp = 'whatsapp:+14155238886' 

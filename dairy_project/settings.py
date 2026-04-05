@@ -100,11 +100,17 @@ LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 LOGIN_URL = '/accounts/login/'
 # settings.py
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
+
+# Replace the hardcoded strings with these:
+TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
+TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
+TWILIO_FROM_NUMBER = os.getenv('TWILIO_FROM_NUMBER')
 # Twilio Configuration
-TWILIO_ACCOUNT_SID = 'AC47178366f2fead69604045b7a4b49a9b' # From Twilio Dashboard
-TWILIO_AUTH_TOKEN = '353aec3059954e43ed3f3e6ad5784d24'              # From Twilio Dashboard
-TWILIO_WHATSAPP_NUMBER = 'whatsapp:+254784646194'       # Twilio Sandbox Number
+
 
 
 # Celery Configuration
