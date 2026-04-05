@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block title %}My Cows{% endblock %}
+{% block page_title %}My Herd{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>My Herd 🐄</h2>
+        <p>{{ cows.count }} active cows on {{ farm.name }}</p>
+    </div>
+    <a href="{% url 'cow_add' %}" class="btn-primary-custom">
+        <i class="bi bi-plus-lg"></i> Add Cow
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card-custom mb-4">
+    <div class="card-body-custom">
+        <form method="get" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+            <div>
+                <label class="form-label-custom">Search</label>
+                <input type="text" name="search" value="{{ search }}" class="form-control-custom" 
+                       placeholder="Name or tag..." style="width:200px">
+            </div>
+            <div>
+                <label class="form-label-custom">Status</label>
+                <select name="status" class="form-control-custom" style="width:150px">
+                    <option value="">All Status</option>
+                    {% for val, label in status_choices %}
+                    <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="form-label-custom">Breed</label>
+                <select name="breed" class="form-control-custom" style="width:150px">
+                    <option value="">All Breeds</option>
+                    {% for val, label in breed_choices %}
+                    <option value="{{ val }}" {% if breed_filter == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn-primary-custom">
+                <i class="bi bi-search"></i> Filter
+            </button>
+            <a href="{% url 'cow_list' %}" class="btn-outline-custom">Reset</a>
+        </form>
+    </div>
+</div>
+
+{% if cows %}
+<div class="row g-3">
+    {% for cow in cows %}
+    <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
+        <a href="{% url 'cow_detail' cow.pk %}" style="text-decoration:none">
+            <div class="cow-card">
+                <div class="cow-photo">
+                    {% if cow.photo %}
+                        <img src="{{ cow.photo.url }}" alt="{{ cow.name }}" style="width:100%;height:160px;object-fit:cover">
+                    {% else %}
+                        🐄
+                    {% endif %}
+                </div>
+                <div class="cow-info">
+                    <div class="cow-tag">{{ cow.tag_number }}</div>
+                    <div class="cow-name">{{ cow.name }}</div>
+                    <div style="font-size:13px;color:var(--text-muted);margin-bottom:10px">
+                        {{ cow.get_breed_display }} &bull; {{ cow.age }}
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between">
+                        <span class="badge-status badge-{{ cow.status }}">{{ cow.get_status_display }}</span>
+                        {% with total=cow.total_milk_this_month %}
+                        {% if total %}
+                        <span style="font-size:12px;color:var(--green-bright);font-weight:600">
+                            🥛 {{ total|floatformat:0 }}L
+                        </span>
+                        {% endif %}
+                        {% endwith %}
+                    </div>
+
+                    {% with events=cow.days_to_next_event %}
+                    {% if events %}
+                    <div style="margin-top:10px;padding-top:10px;border-top:1px solid #f3f4f6">
+                        {% with event=events.0 %}
+                        <div style="font-size:11px;{% if event.1 <= 5 %}color:#dc2626{% else %}color:var(--text-muted){% endif %}">
+                            {% if event.0 == 'Insemination' %}💉{% else %}🍼{% endif %}
+                            {{ event.0 }} in <strong>{{ event.1 }} days</strong>
+                        </div>
+                        {% endwith %}
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card-custom">
+    <div class="empty-state">
+        <div class="empty-icon">🐄</div>
+        <h4>No cows found</h4>
+        <p>{% if search or status_filter or breed_filter %}Try adjusting your filters{% else %}Start building your herd by adding your first cow{% endif %}</p>
+        <a href="{% url 'cow_add' %}" class="btn-primary-custom">Add First Cow</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

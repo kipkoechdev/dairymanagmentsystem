@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Record Milk Sale{% endblock %}
+{% block page_title %}Milk Sale{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div><h2>Record Milk Sale 💰</h2></div>
+    <a href="{% url 'milk_production_report' %}" class="btn-outline-custom"><i class="bi bi-arrow-left"></i> Back to Report</a>
+</div>
+<div class="row justify-content-center"><div class="col-lg-5">
+<div class="card-custom"><div class="card-header-custom"><h5>💰 Sale Details</h5></div>
+<div class="card-body-custom">
+<form method="post">{% csrf_token %}
+<div class="form-group-custom"><label class="form-label-custom">Date *</label>
+    <input type="date" name="date" value="{{ form.date.value|default:'' }}" class="form-control-custom" required></div>
+<div class="form-group-custom"><label class="form-label-custom">Litres Sold *</label>
+    <input type="number" name="litres_sold" class="form-control-custom" id="litres" step="0.1" min="0" value="{{ form.litres_sold.value|default:'' }}" required placeholder="e.g. 50.0"></div>
+<div class="form-group-custom"><label class="form-label-custom">Price Per Litre (KES) *</label>
+    <input type="number" name="price_per_litre" class="form-control-custom" id="price" step="0.01" min="0" value="{{ form.price_per_litre.value|default:'' }}" required placeholder="e.g. 55"></div>
+<div style="padding:14px;background:#f0fdf4;border-radius:12px;margin-bottom:16px">
+    <div style="font-size:12px;color:var(--text-muted)">Total Amount</div>
+    <div id="total-amount" style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--green-bright)">KES 0</div>
+</div>
+<div class="form-group-custom"><label class="form-label-custom">Buyer Name</label>
+    <input type="text" name="buyer_name" class="form-control-custom" value="{{ form.buyer_name.value|default:'' }}" placeholder="KCC, Brookside, individual..."></div>
+<div class="form-group-custom" style="display:flex;align-items:center;gap:10px;padding:12px;background:#f0fdf4;border-radius:10px">
+    <input type="checkbox" name="payment_received" id="payment_received" checked style="accent-color:var(--green-bright);width:18px;height:18px">
+    <label for="payment_received" style="font-weight:600;cursor:pointer">✅ Payment received</label>
+</div>
+<div class="form-group-custom"><label class="form-label-custom">Notes</label>
+    <textarea name="notes" class="form-control-custom" rows="2" placeholder="Optional...">{{ form.notes.value|default:'' }}</textarea></div>
+<div style="display:flex;gap:12px">
+    <button type="submit" class="btn-primary-custom"><i class="bi bi-check-lg"></i> Record Sale</button>
+    <a href="{% url 'milk_production_report' %}" class="btn-outline-custom">Cancel</a>
+</div>
+</form>
+</div></div>
+</div></div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function updateTotal() {
+    const l = parseFloat(document.getElementById('litres').value) || 0;
+    const p = parseFloat(document.getElementById('price').value) || 0;
+    document.getElementById('total-amount').textContent = 'KES ' + (l * p).toFixed(2);
+}
+document.getElementById('litres').addEventListener('input', updateTotal);
+document.getElementById('price').addEventListener('input', updateTotal);
+</script>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Retire Cow{% endblock %}
+{% block page_title %}Retire Cow{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-5">
+<div class="card-custom">
+<div class="card-header-custom"><h5>⚠️ Retire / Remove {{ cow.name }}</h5></div>
+<div class="card-body-custom">
+<p style="margin-bottom:20px;color:var(--text-muted)">This will mark <strong>{{ cow.name }} ({{ cow.tag_number }})</strong> as inactive. All records will be preserved.</p>
+<form method="post">{% csrf_token %}
+<div class="form-group-custom"><label class="form-label-custom">Reason</label>
+    <select name="action" class="form-control-custom">
+        <option value="sold">Sold</option>
+        <option value="deceased">Deceased</option>
+    </select>
+</div>
+<div style="display:flex;gap:12px;margin-top:20px">
+    <button type="submit" style="background:#dc2626;color:white;border:none;padding:10px 20px;border-radius:10px;font-weight:700;cursor:pointer">Confirm Retire</button>
+    <a href="{% url 'cow_detail' cow.pk %}" class="btn-outline-custom">Cancel</a>
+</div>
+</form>
+</div>
+</div>
+</div></div>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Milk Production Report{% endblock %}
+{% block page_title %}Milk Report{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div><h2>Milk Production Report 📊</h2><p>{{ month_start|date:"F Y" }}</p></div>
+    <a href="{% url 'milk_sale_add' %}" class="btn-primary-custom"><i class="bi bi-cash-coin"></i> Record Sale</a>
+</div>
+
+<div class="row g-4">
+<div class="col-lg-7">
+<div class="card-custom">
+<div class="card-header-custom"><h5>🐄 Per-Cow Production This Month</h5></div>
+{% if cow_summary %}
+<table class="table-custom">
+<thead><tr><th>#</th><th>Cow</th><th>Tag</th><th>Litres This Month</th><th>Daily Avg</th></tr></thead>
+<tbody>
+{% for cow in cow_summary %}
+<tr>
+    <td style="color:var(--text-muted)">{{ forloop.counter }}</td>
+    <td><a href="{% url 'cow_detail' cow.pk %}" style="color:var(--green-bright);font-weight:600">{{ cow.name }}</a></td>
+    <td>{{ cow.tag_number }}</td>
+    <td>
+        <div style="display:flex;align-items:center;gap:8px">
+            <div style="flex:1;background:#f3f4f6;border-radius:4px;height:8px;max-width:120px">
+                <div style="background:var(--green-bright);height:8px;border-radius:4px;width:{{ cow.month_total|floatformat:0 }}px;max-width:100%"></div>
+            </div>
+            <strong>{{ cow.month_total|floatformat:1 }}L</strong>
+        </div>
+    </td>
+    <td>{{ cow.month_total|floatformat:1|divisibleby:30 }}L</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<div class="empty-state" style="padding:40px"><div class="empty-icon">🥛</div><p>No milk data this month</p><a href="{% url 'milk_bulk_entry' %}" class="btn-primary-custom">Enter Milk Data</a></div>
+{% endif %}
+</div>
+</div>
+
+<div class="col-lg-5">
+<div class="card-custom mb-4">
+<div class="card-header-custom"><h5>💰 Milk Sales This Month</h5></div>
+<div class="card-body-custom" style="padding:0">
+<div style="padding:20px;background:linear-gradient(135deg,#f0fdf4,#dcfce7)">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div><div style="font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase">Litres Sold</div>
+            <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--green-deep)">{{ total_sold|floatformat:0 }}L</div></div>
+        <div><div style="font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase">Revenue (KES)</div>
+            <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--green-bright)">{{ total_revenue|floatformat:0 }}</div></div>
+    </div>
+</div>
+{% if sales %}
+<table class="table-custom">
+<thead><tr><th>Date</th><th>Litres</th><th>Price/L</th><th>Total</th><th>Buyer</th></tr></thead>
+<tbody>
+{% for s in sales %}
+<tr>
+    <td>{{ s.date|date:"d M" }}</td>
+    <td>{{ s.litres_sold }}L</td>
+    <td>KES {{ s.price_per_litre }}</td>
+    <td><strong style="color:var(--green-bright)">{{ s.total_amount|floatformat:0 }}</strong></td>
+    <td style="color:var(--text-muted)">{{ s.buyer_name|default:"—" }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<div class="empty-state" style="padding:30px"><p>No sales recorded this month</p></div>
+{% endif %}
+</div>
+</div>
+</div>
+</div>
+{% endblock %}

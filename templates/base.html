@@ -1,0 +1,762 @@
+{%load static%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/x-icon" href="{% static 'images/cow_favicon.ico' %}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Salron Dairy Farm{% endblock %} | Dairy Farm Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --green-deep: #0d3d2b;
+            --green-mid: #1a6642;
+            --green-bright: #2d9e62;
+            --green-light: #4dba7f;
+            --gold: #e8a430;
+            --gold-light: #f5c060;
+            --cream: #faf7f0;
+            --text-dark: #1a1a1a;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --white: #ffffff;
+            --sidebar-w: 260px;
+            --danger: #e53e3e;
+            --warning: #dd6b20;
+            --info: #2b6cb0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--cream);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, h4, h5, .font-display { font-family: 'Syne', sans-serif; }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed;
+            top: 0; left: 0;
+            width: var(--sidebar-w);
+            height: 100vh;
+            background: var(--green-deep);
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-brand {
+            padding: 24px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-brand .brand-icon {
+            width: 44px; height: 44px;
+            background: var(--gold);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-brand h4 {
+            color: white;
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .sidebar-brand small {
+            color: var(--green-light);
+            font-size: 12px;
+        }
+
+        .sidebar-section {
+            padding: 12px 16px 4px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.35);
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 8px;
+            margin: 2px 8px;
+            transition: all 0.2s;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .sidebar-nav a.active {
+            background: var(--green-bright);
+            color: white;
+        }
+
+        .sidebar-nav a i { font-size: 16px; width: 20px; text-align: center; }
+
+        .sidebar-nav .nav-badge {
+            margin-left: auto;
+            background: var(--gold);
+            color: var(--green-deep);
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 16px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-footer a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            font-size: 13px;
+            padding: 8px;
+            border-radius: 8px;
+            transition: 0.2s;
+        }
+
+        .sidebar-footer a:hover { color: white; background: rgba(255,255,255,0.1); }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-wrap {
+            margin-left: var(--sidebar-w);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== TOPBAR ===== */
+        .topbar {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 0 28px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .topbar-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--green-deep);
+        }
+
+        .topbar-actions { display: flex; align-items: center; gap: 12px; }
+
+        .user-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--cream);
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            padding: 6px 12px 6px 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        .user-avatar {
+            width: 28px; height: 28px;
+            background: var(--green-bright);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        /* ===== PAGE CONTENT ===== */
+        .page-content {
+            flex: 1;
+            padding: 28px;
+        }
+
+        /* ===== STAT CARDS ===== */
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        }
+
+        .stat-card .stat-icon {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card .stat-value {
+            font-family: 'Syne', sans-serif;
+            font-size: 32px;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .stat-card .stat-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .stat-card .stat-trend {
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            bottom: -20px; right: -20px;
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            opacity: 0.06;
+        }
+
+        .stat-green .stat-icon { background: #dcfce7; color: var(--green-bright); }
+        .stat-green .stat-value { color: var(--green-deep); }
+        .stat-green::after { background: var(--green-bright); }
+
+        .stat-gold .stat-icon { background: #fef3c7; color: var(--gold); }
+        .stat-gold .stat-value { color: #92400e; }
+        .stat-gold::after { background: var(--gold); }
+
+        .stat-blue .stat-icon { background: #dbeafe; color: #2563eb; }
+        .stat-blue .stat-value { color: #1e3a8a; }
+        .stat-blue::after { background: #2563eb; }
+
+        .stat-red .stat-icon { background: #fee2e2; color: #dc2626; }
+        .stat-red .stat-value { color: #7f1d1d; }
+
+        /* ===== CARDS ===== */
+        .card-custom {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .card-custom .card-header-custom {
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-custom .card-header-custom h5 {
+            font-size: 16px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .card-custom .card-body-custom { padding: 24px; }
+
+        /* ===== TABLE ===== */
+        .table-custom { width: 100%; border-collapse: collapse; }
+        .table-custom th {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            padding: 12px 16px;
+            background: #f9fafb;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+        }
+        .table-custom td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+        .table-custom tr:last-child td { border-bottom: none; }
+        .table-custom tr:hover td { background: #f9fafb; }
+
+        /* ===== BADGES ===== */
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-status::before {
+            content: '';
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .badge-lactating { background: #dcfce7; color: #15803d; }
+        .badge-pregnant { background: #fce7f3; color: #be185d; }
+        .badge-dry { background: #f3f4f6; color: #6b7280; }
+        .badge-heifer { background: #dbeafe; color: #1d4ed8; }
+        .badge-sick { background: #fee2e2; color: #dc2626; }
+        .badge-bull { background: #fef3c7; color: #d97706; }
+
+        /* ===== ALERTS ===== */
+        .alert-urgent {
+            background: linear-gradient(135deg, #fff5f5, #fff);
+            border: 1px solid #fca5a5;
+            border-left: 4px solid var(--danger);
+            border-radius: 12px;
+            padding: 14px 18px;
+        }
+
+        .alert-warning-custom {
+            background: linear-gradient(135deg, #fffbeb, #fff);
+            border: 1px solid #fcd34d;
+            border-left: 4px solid var(--gold);
+            border-radius: 12px;
+            padding: 14px 18px;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn-primary-custom {
+            background: var(--green-bright);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary-custom:hover {
+            background: var(--green-mid);
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(45,158,98,0.3);
+        }
+
+        .btn-outline-custom {
+            background: transparent;
+            color: var(--green-bright);
+            border: 1.5px solid var(--green-bright);
+            padding: 9px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-outline-custom:hover {
+            background: var(--green-bright);
+            color: white;
+        }
+
+        /* ===== FORMS ===== */
+        .form-group-custom { margin-bottom: 20px; }
+        .form-label-custom {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 6px;
+        }
+
+        .form-control-custom {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'DM Sans', sans-serif;
+            transition: border-color 0.2s;
+            background: white;
+        }
+
+        .form-control-custom:focus {
+            outline: none;
+            border-color: var(--green-bright);
+            box-shadow: 0 0 0 3px rgba(45,158,98,0.1);
+        }
+
+        /* ===== COW CARD ===== */
+        .cow-card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        .cow-card:hover {
+            border-color: var(--green-bright);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(45,158,98,0.15);
+        }
+
+        .cow-card .cow-photo {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+
+        .cow-card .cow-info { padding: 16px; }
+        .cow-card .cow-tag {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--green-bright);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .cow-card .cow-name {
+            font-family: 'Syne', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            margin: 4px 0;
+        }
+
+        /* ===== EVENT TIMELINE ===== */
+        .event-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .event-item:last-child { border-bottom: none; }
+
+        .event-dot {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .event-dot.insemination { background: #dbeafe; color: #1d4ed8; }
+        .event-dot.delivery { background: #fce7f3; color: #be185d; }
+        .event-dot.vaccination { background: #dcfce7; color: #15803d; }
+        .event-dot.urgent { background: #fee2e2; color: #dc2626; animation: pulse 2s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* ===== CHARTS ===== */
+        .chart-container { position: relative; height: 240px; }
+
+        /* ===== QUICK ACTIONS ===== */
+        .quick-action {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 20px 12px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: var(--text-dark);
+        }
+
+        .quick-action:hover {
+            border-color: var(--green-bright);
+            background: #f0fdf4;
+            color: var(--green-deep);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(45,158,98,0.12);
+        }
+
+        .quick-action .qa-icon {
+            width: 48px; height: 48px;
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+        }
+
+        .quick-action span { font-size: 12px; font-weight: 600; text-align: center; }
+
+        /* ===== MOBILE TOGGLE ===== */
+        .sidebar-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            color: var(--green-deep);
+        }
+
+        /* ===== MESSAGES ===== */
+        .toast-area {
+            position: fixed;
+            top: 80px; right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast-msg {
+            padding: 12px 18px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            min-width: 280px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast-success { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+        .toast-error { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; }
+        .toast-info { background: #dbeafe; color: #1d4ed8; border: 1px solid #93c5fd; }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main-wrap { margin-left: 0; }
+            .sidebar-toggle { display: block; }
+            .page-content { padding: 16px; }
+        }
+
+        /* ===== PAGE HEADER ===== */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .page-header h2 {
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--green-deep);
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-top: 2px;
+        }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state .empty-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.4; }
+        .empty-state h4 { font-size: 18px; color: var(--text-dark); margin-bottom: 8px; }
+        .empty-state p { font-size: 14px; margin-bottom: 20px; }
+
+        /* Scrollbar */
+        .sidebar::-webkit-scrollbar { width: 4px; }
+        .sidebar::-webkit-scrollbar-track { background: transparent; }
+        .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+{% if user.is_authenticated %}
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-icon">🐄</div>
+        <h4>Salron Dairy Farm</h4>
+        {% if user.farm %}<small>{{ user.farm.name }}</small>{% endif %}
+    </div>
+
+    <div class="sidebar-nav">
+        <div class="sidebar-section">Overview</div>
+        <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            <i class="bi bi-grid-1x2"></i> Dashboard
+        </a>
+
+        <div class="sidebar-section">Herd</div>
+        <a href="{% url 'cow_list' %}" class="{% if 'cow' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="bi bi-emoji-smile"></i> My Cows
+        </a>
+        <a href="{% url 'cow_add' %}">
+            <i class="bi bi-plus-circle"></i> Add Cow
+        </a>
+
+        <div class="sidebar-section">Production</div>
+        <a href="{% url 'milk_entry' %}" class="{% if request.resolver_match.url_name == 'milk_entry' %}active{% endif %}">
+            <i class="bi bi-droplet"></i> Record Milk
+        </a>
+        <a href="{% url 'milk_bulk_entry' %}">
+            <i class="bi bi-table"></i> Bulk Entry
+        </a>
+        <a href="{% url 'milk_production_report' %}">
+            <i class="bi bi-bar-chart"></i> Milk Report
+        </a>
+        <a href="{% url 'milk_sale_add' %}">
+            <i class="bi bi-cash-coin"></i> Record Sale
+        </a>
+
+        <div class="sidebar-section">Finance</div>
+        <a href="{% url 'expense_list' %}" class="{% if 'expense' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="bi bi-receipt"></i> Expenses
+        </a>
+        <a href="{% url 'expense_add' %}">
+            <i class="bi bi-plus-square"></i> Add Expense
+        </a>
+        <a href="{% url 'financial_report' %}">
+            <i class="bi bi-graph-up"></i> Financial Report
+        </a>
+
+        <div class="sidebar-section">Alerts</div>
+        <a href="{% url 'reminders_list' %}" class="{% if 'reminder' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="bi bi-bell"></i> SMS Reminders
+        </a>
+        <a href="{% url 'reminder_add' %}">
+            <i class="bi bi-chat-square-dots"></i> New Reminder
+        </a>
+    </div>
+
+    <div class="sidebar-footer">
+      
+        <a href="{% url 'logout' %}">
+            <i class="bi bi-box-arrow-left"></i> Logout
+        </a>
+    </div>
+</nav>
+
+<!-- Main -->
+<div class="main-wrap">
+    <header class="topbar">
+        <div style="display:flex;align-items:center;gap:12px">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">
+                <i class="bi bi-list"></i>
+            </button>
+            <span class="topbar-title">{% block page_title %}Dashboard{% endblock %}</span>
+        </div>
+        <div class="topbar-actions">
+            <a href="{% url 'milk_entry' %}" class="btn-primary-custom" style="padding:8px 14px;font-size:13px">
+                <i class="bi bi-plus"></i> Quick Entry
+            </a>
+            <div class="user-pill">
+                <div class="user-avatar">{{ user.first_name.0|upper }}{{ user.last_name.0|upper }}</div>
+                {{ user.first_name }}
+            </div>
+        </div>
+    </header>
+
+    <!-- Toast messages -->
+    <div class="toast-area">
+        {% for message in messages %}
+        <div class="toast-msg toast-{{ message.tags }}" id="toast-{{ forloop.counter }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="page-content">
+        {% block content %}{% endblock %}
+    </div>
+</div>
+
+{% else %}
+{% block auth_content %}{% endblock %}
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+}
+
+// Auto-dismiss toasts
+document.querySelectorAll('.toast-msg').forEach((t, i) => {
+    setTimeout(() => {
+        t.style.animation = 'slideIn 0.3s ease reverse';
+        setTimeout(() => t.remove(), 300);
+    }, 4000 + i * 500);
+});
+
+// Close sidebar on outside click (mobile)
+document.addEventListener('click', (e) => {
+    const sidebar = document.getElementById('sidebar');
+    const toggle = document.querySelector('.sidebar-toggle');
+    if (sidebar && toggle && !sidebar.contains(e.target) && !toggle.contains(e.target)) {
+        sidebar.classList.remove('open');
+    }
+});
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

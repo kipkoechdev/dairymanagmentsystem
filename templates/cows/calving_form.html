@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Calving Record{% endblock %}
+{% block page_title %}Calving Record{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div><h2>Calving Record 🍼</h2><p>For: <strong>{{ cow.name }}</strong> ({{ cow.tag_number }})</p></div>
+    <a href="{% url 'cow_detail' cow.pk %}" class="btn-outline-custom"><i class="bi bi-arrow-left"></i> Back</a>
+</div>
+<div class="row justify-content-center"><div class="col-lg-7">
+<div class="card-custom"><div class="card-header-custom"><h5>🍼 Calving Details</h5></div>
+<div class="card-body-custom">
+<form method="post">{% csrf_token %}
+<div class="row g-3">
+<div class="col-md-6"><label class="form-label-custom">Calving Date *</label>
+    <input type="date" name="calving_date" value="{{ form.calving_date.value|default:'' }}" class="form-control-custom" required></div>
+<div class="col-md-6"><label class="form-label-custom">Calving Ease</label>
+    <select name="calving_ease" class="form-control-custom">{% for v,l in form.fields.calving_ease.choices %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+<div class="col-md-6"><label class="form-label-custom">Calf Tag Number</label>
+    <input type="text" name="calf_tag" class="form-control-custom" value="{{ form.calf_tag.value|default:'' }}" placeholder="e.g. KE-045"></div>
+<div class="col-md-6"><label class="form-label-custom">Calf Name</label>
+    <input type="text" name="calf_name" class="form-control-custom" value="{{ form.calf_name.value|default:'' }}" placeholder="Optional name"></div>
+<div class="col-md-6"><label class="form-label-custom">Calf Gender *</label>
+    <select name="calf_gender" class="form-control-custom" required><option value="female">Female (Heifer)</option><option value="male">Male (Bull)</option></select></div>
+<div class="col-md-6"><label class="form-label-custom">Calf Weight (kg)</label>
+    <input type="number" name="calf_weight_kg" class="form-control-custom" step="0.1" min="0" value="{{ form.calf_weight_kg.value|default:'' }}" placeholder="e.g. 32"></div>
+<div class="col-12">
+    <div style="padding:14px;background:#f0fdf4;border-radius:12px;border:1px solid #86efac">
+        <input type="checkbox" name="calf_survived" id="calf_survived" checked style="accent-color:var(--green-bright)">
+        <label for="calf_survived" style="font-weight:600;cursor:pointer;margin-left:8px">✅ Calf survived</label>
+    </div>
+</div>
+<div class="col-12"><label class="form-label-custom">Notes</label>
+    <textarea name="notes" class="form-control-custom" rows="3" placeholder="Any observations about the birth...">{{ form.notes.value|default:'' }}</textarea></div>
+</div>
+<div style="margin-top:20px;padding:14px;background:#fffbeb;border-radius:12px;font-size:13px;border:1px solid #fcd34d">
+    <strong>ℹ️ After saving:</strong> {{ cow.name }} will automatically be set to <strong>Lactating</strong> status. You can then add the calf as a new cow.
+</div>
+<div style="display:flex;gap:12px;margin-top:16px">
+    <button type="submit" class="btn-primary-custom"><i class="bi bi-check-lg"></i> Save Calving Record</button>
+    <a href="{% url 'cow_detail' cow.pk %}" class="btn-outline-custom">Cancel</a>
+</div>
+</form>
+</div></div>
+</div></div>
+{% endblock %}

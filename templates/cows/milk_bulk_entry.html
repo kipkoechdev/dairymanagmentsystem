@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load dict_filters %}
+{% block title %}Bulk Milk Entry{% endblock %}
+{% block page_title %}Bulk Milk Entry{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>Bulk Milk Entry 📋</h2>
+        <p>Enter milk for all cows at once</p>
+    </div>
+    <a href="{% url 'milk_entry' %}" class="btn-outline-custom">
+        <i class="bi bi-arrow-left"></i> Single Entry
+    </a>
+</div>
+
+<div class="card-custom">
+    <div class="card-header-custom">
+        <h5>🐄 All Lactating Cows — {{ today|date:"d F Y" }}</h5>
+        <div id="bulk-total" style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--green-bright)">0.0 L total</div>
+    </div>
+    <div class="card-body-custom">
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group-custom">
+                <label class="form-label-custom">Date</label>
+                <input type="date" name="date" value="{{ today }}" class="form-control-custom" style="max-width:200px">
+            </div>
+            <div style="overflow-x:auto">
+                <table class="table-custom" style="min-width:700px">
+                    <thead>
+                        <tr>
+                            <th>Cow</th>
+                            <th>Tag</th>
+                            <th>Status</th>
+                            <th>☀️ Morning (L)</th>
+                            <th>🌤️ Midday (L)</th>
+                            <th>🌙 Evening (L)</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cow in cows %}
+                        {% with ex=existing|get_item:cow.id %}
+                        <tr>
+                            <td><strong>{{ cow.name }}</strong></td>
+                            <td style="color:var(--green-bright);font-weight:600">{{ cow.tag_number }}</td>
+                            <td><span class="badge-status badge-{{ cow.status }}">{{ cow.get_status_display }}</span></td>
+                            <td>
+                                <input type="number" name="morning_{{ cow.id }}"
+                                       value="{{ ex.morning_litres|default:'0' }}"
+                                       class="form-control-custom milk-input" style="width:90px"
+                                       step="0.1" min="0" data-row="{{ cow.id }}">
+                            </td>
+                            <td>
+                                <input type="number" name="midday_{{ cow.id }}"
+                                       value="{{ ex.midday_litres|default:'0' }}"
+                                       class="form-control-custom milk-input" style="width:90px"
+                                       step="0.1" min="0" data-row="{{ cow.id }}">
+                            </td>
+                            <td>
+                                <input type="number" name="evening_{{ cow.id }}"
+                                       value="{{ ex.evening_litres|default:'0' }}"
+                                       class="form-control-custom milk-input" style="width:90px"
+                                       step="0.1" min="0" data-row="{{ cow.id }}">
+                            </td>
+                            <td>
+                                <span id="row-total-{{ cow.id }}" style="font-weight:700;color:var(--green-bright)">
+                                    {% if ex %}{{ ex.total_litres }}{% else %}0.0{% endif %}L
+                                </span>
+                            </td>
+                        </tr>
+                        {% endwith %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div style="margin-top:24px;display:flex;gap:12px;align-items:center">
+                <button type="submit" class="btn-primary-custom">
+                    <i class="bi bi-check-lg"></i> Save All Records
+                </button>
+                <span style="color:var(--text-muted);font-size:13px">Records with 0 litres will be skipped</span>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateTotals() {
+    let grandTotal = 0;
+    const rows = new Set();
+    document.querySelectorAll('.milk-input').forEach(el => rows.add(el.dataset.row));
+    rows.forEach(id => {
+        const am = parseFloat(document.querySelector(`[name=morning_${id}]`).value) || 0;
+        const md = parseFloat(document.querySelector(`[name=midday_${id}]`).value) || 0;
+        const pm = parseFloat(document.querySelector(`[name=evening_${id}]`).value) || 0;
+        const total = am + md + pm;
+        document.getElementById(`row-total-${id}`).textContent = total.toFixed(1) + 'L';
+        grandTotal += total;
+    });
+    document.getElementById('bulk-total').textContent = grandTotal.toFixed(1) + ' L total';
+}
+document.querySelectorAll('.milk-input').forEach(el => el.addEventListener('input', updateTotals));
+updateTotals();
+</script>
+{% endblock %}

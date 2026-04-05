@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% block title %}Record Milk{% endblock %}
+{% block page_title %}Milk Production{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>Record Milk Production 🥛</h2>
+        <p>Log daily milk output per cow</p>
+    </div>
+    <a href="{% url 'milk_bulk_entry' %}" class="btn-outline-custom">
+        <i class="bi bi-table"></i> Bulk Entry
+    </a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <h5><i class="bi bi-plus-circle" style="color:var(--green-bright)"></i> New Entry</h5>
+            </div>
+            <div class="card-body-custom">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group-custom">
+                        <label class="form-label-custom">Cow *</label>
+                        <select name="cow" class="form-control-custom" required>
+                            <option value="">— Select Cow —</option>
+                            {% for cow in form.fields.cow.queryset %}
+                            <option value="{{ cow.pk }}">{{ cow.name }} ({{ cow.tag_number }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group-custom">
+                        <label class="form-label-custom">Date *</label>
+                        <input type="date" name="date" class="form-control-custom"
+                               value="{{ form.date.value|default:'' }}" required>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-4">
+                            <label class="form-label-custom">☀️ Morning (L)</label>
+                            <input type="number" name="morning_litres" class="form-control-custom"
+                                   value="0" step="0.1" min="0">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label-custom">🌤️ Midday (L)</label>
+                            <input type="number" name="midday_litres" class="form-control-custom"
+                                   value="0" step="0.1" min="0">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label-custom">🌙 Evening (L)</label>
+                            <input type="number" name="evening_litres" class="form-control-custom"
+                                   value="0" step="0.1" min="0">
+                        </div>
+                    </div>
+                    <div class="form-group-custom" style="margin-top:12px">
+                        <label class="form-label-custom">Total</label>
+                        <div id="total-display" style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--green-bright)">0.0 L</div>
+                    </div>
+                    <div class="form-group-custom">
+                        <label class="form-label-custom">Milk Quality</label>
+                        <select name="milk_quality" class="form-control-custom">
+                            <option value="good">Good</option>
+                            <option value="fair">Fair</option>
+                            <option value="poor">Poor</option>
+                            <option value="discarded">Discarded</option>
+                        </select>
+                    </div>
+                    <div class="form-group-custom">
+                        <label class="form-label-custom">Notes</label>
+                        <textarea name="notes" class="form-control-custom" rows="2" placeholder="Optional notes..."></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary-custom" style="width:100%">
+                        <i class="bi bi-check-lg"></i> Save Milk Record
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's records -->
+    <div class="col-lg-7">
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <h5><i class="bi bi-calendar-check" style="color:#2563eb"></i> Today's Records</h5>
+                <span style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--green-bright)">
+                    {{ total_today|floatformat:1 }}L
+                </span>
+            </div>
+            <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);padding:16px 24px;display:flex;gap:24px">
+                <div style="text-align:center">
+                    <div style="font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase">Cows Recorded</div>
+                    <div style="font-size:24px;font-weight:800;color:var(--green-deep)">{{ todays_milk.count }}</div>
+                </div>
+                <div style="text-align:center">
+                    <div style="font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase">Total Today</div>
+                    <div style="font-size:24px;font-weight:800;color:var(--green-bright)">{{ total_today|floatformat:1 }}L</div>
+                </div>
+            </div>
+            {% if todays_milk %}
+            <table class="table-custom">
+                <thead>
+                    <tr><th>Cow</th><th>☀️ AM</th><th>🌤️ MD</th><th>🌙 PM</th><th>Total</th></tr>
+                </thead>
+                <tbody>
+                    {% for m in todays_milk %}
+                    <tr>
+                        <td>
+                            <strong>{{ m.cow.name }}</strong>
+                            <div style="font-size:11px;color:var(--text-muted)">{{ m.cow.tag_number }}</div>
+                        </td>
+                        <td>{{ m.morning_litres }}L</td>
+                        <td>{{ m.midday_litres }}L</td>
+                        <td>{{ m.evening_litres }}L</td>
+                        <td><strong style="color:var(--green-bright)">{{ m.total_litres }}L</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state" style="padding:40px">
+                <div class="empty-icon">🥛</div>
+                <p>No records yet today. Add the first entry!</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateTotal() {
+    const am = parseFloat(document.querySelector('[name=morning_litres]').value) || 0;
+    const md = parseFloat(document.querySelector('[name=midday_litres]').value) || 0;
+    const pm = parseFloat(document.querySelector('[name=evening_litres]').value) || 0;
+    document.getElementById('total-display').textContent = (am + md + pm).toFixed(1) + ' L';
+}
+document.querySelectorAll('[name=morning_litres],[name=midday_litres],[name=evening_litres]')
+    .forEach(el => el.addEventListener('input', updateTotal));
+</script>
+{% endblock %}

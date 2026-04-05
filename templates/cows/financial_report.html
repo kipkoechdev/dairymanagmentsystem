@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}Financial Report{% endblock %}
+{% block page_title %}Financial Report{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div><h2>Financial Report 📈</h2><p>6-month overview</p></div>
+</div>
+
+<div class="row g-3 mb-4">
+{% with last=monthly_data|last %}
+<div class="col-md-4">
+    <div class="stat-card stat-green">
+        <div class="stat-icon"><i class="bi bi-arrow-up-circle"></i></div>
+        <div class="stat-value">{{ last.revenue|floatformat:0 }}</div>
+        <div class="stat-label">Revenue KES (This Month)</div>
+    </div>
+</div>
+<div class="col-md-4">
+    <div class="stat-card stat-red">
+        <div class="stat-icon"><i class="bi bi-arrow-down-circle"></i></div>
+        <div class="stat-value">{{ last.expenses|floatformat:0 }}</div>
+        <div class="stat-label">Expenses KES (This Month)</div>
+    </div>
+</div>
+<div class="col-md-4">
+    <div class="stat-card {% if last.profit >= 0 %}stat-green{% else %}stat-red{% endif %}">
+        <div class="stat-icon"><i class="bi bi-graph-up-arrow"></i></div>
+        <div class="stat-value">{{ last.profit|floatformat:0 }}</div>
+        <div class="stat-label">Net Profit/Loss KES (This Month)</div>
+    </div>
+</div>
+{% endwith %}
+</div>
+
+<div class="row g-4">
+<div class="col-lg-8">
+<div class="card-custom">
+<div class="card-header-custom"><h5>📊 Revenue vs Expenses — Last 6 Months</h5></div>
+<div class="card-body-custom"><div style="height:300px"><canvas id="finChart"></canvas></div></div>
+</div>
+</div>
+<div class="col-lg-4">
+<div class="card-custom">
+<div class="card-header-custom"><h5>📋 Monthly Breakdown</h5></div>
+<div class="card-body-custom" style="padding:0">
+{% for d in monthly_data %}
+<div style="padding:14px 20px;border-bottom:1px solid #f3f4f6">
+    <div style="font-weight:600;font-size:14px;margin-bottom:6px">{{ d.month }}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:12px">
+        <div>
+            <div style="color:var(--text-muted)">Revenue</div>
+            <div style="color:var(--green-bright);font-weight:700">{{ d.revenue|floatformat:0 }}</div>
+        </div>
+        <div>
+            <div style="color:var(--text-muted)">Expenses</div>
+            <div style="color:var(--danger);font-weight:700">{{ d.expenses|floatformat:0 }}</div>
+        </div>
+        <div>
+            <div style="color:var(--text-muted)">Profit</div>
+            <div style="{% if d.profit >= 0 %}color:var(--green-bright){% else %}color:var(--danger){% endif %};font-weight:700">
+                {{ d.profit|floatformat:0 }}</div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+</div>
+</div>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const ctx = document.getElementById('finChart').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: {{ months_json|safe }},
+        datasets: [
+            {
+                label: 'Revenue',
+                data: {{ revenue_json|safe }},
+                backgroundColor: 'rgba(45,158,98,0.8)',
+                borderRadius: 6,
+            },
+            {
+                label: 'Expenses',
+                data: {{ expenses_json|safe }},
+                backgroundColor: 'rgba(229,62,62,0.7)',
+                borderRadius: 6,
+            },
+            {
+                label: 'Profit/Loss',
+                data: {{ profit_json|safe }},
+                type: 'line',
+                borderColor: '#e8a430',
+                backgroundColor: 'rgba(232,164,48,0.1)',
+                borderWidth: 2.5,
+                pointRadius: 4,
+                tension: 0.3,
+                fill: false,
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'top' }
+        },
+        scales: {
+            y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } },
+            x: { grid: { display: false } }
+        }
+    }
+});
+</script>
+{% endblock %}

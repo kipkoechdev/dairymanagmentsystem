@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Insemination Record{% endblock %}
+{% block page_title %}Insemination{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>Insemination Record 💉</h2>
+        <p>Recording for: <strong>{{ cow.name }}</strong> ({{ cow.tag_number }})</p>
+    </div>
+    <a href="{% url 'cow_detail' cow.pk %}" class="btn-outline-custom"><i class="bi bi-arrow-left"></i> Back to {{ cow.name }}</a>
+</div>
+<div class="row justify-content-center">
+<div class="col-lg-7">
+<div class="card-custom">
+<div class="card-header-custom"><h5>💉 Insemination Details</h5></div>
+<div class="card-body-custom">
+<form method="post">{% csrf_token %}
+<div class="row g-3">
+<div class="col-md-6">
+    <label class="form-label-custom">Date of Insemination *</label>
+    <input type="date" name="insemination_date" value="{{ form.insemination_date.value|default:'' }}" class="form-control-custom" required>
+</div>
+<div class="col-md-6">
+    <label class="form-label-custom">Method *</label>
+    <select name="method" class="form-control-custom">
+        {% for val, label in form.fields.method.choices %}<option value="{{ val }}" {% if form.method.value == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+</div>
+<div class="col-md-6">
+    <label class="form-label-custom">Bull Breed / Semen Origin</label>
+    <input type="text" name="bull_breed" class="form-control-custom" value="{{ form.bull_breed.value|default:'' }}" placeholder="e.g. Holstein, Friesian">
+</div>
+<div class="col-md-6">
+    <label class="form-label-custom">Semen Batch No.</label>
+    <input type="text" name="semen_batch" class="form-control-custom" value="{{ form.semen_batch.value|default:'' }}" placeholder="Batch/straw number">
+</div>
+<div class="col-md-6">
+    <label class="form-label-custom">AI Technician</label>
+    <input type="text" name="technician" class="form-control-custom" value="{{ form.technician.value|default:'' }}" placeholder="Technician name">
+</div>
+<div class="col-md-6">
+    <label class="form-label-custom">Cost (KES)</label>
+    <input type="number" name="cost" class="form-control-custom" value="{{ form.cost.value|default:'0' }}" step="0.01" min="0">
+</div>
+<div class="col-12">
+    <div style="display:flex;align-items:center;gap:10px;padding:14px;background:#f0fdf4;border-radius:12px;border:1px solid #86efac">
+        <input type="checkbox" name="is_successful" id="is_successful" style="width:18px;height:18px;accent-color:var(--green-bright)" {% if form.is_successful.value %}checked{% endif %}>
+        <label for="is_successful" style="font-weight:600;cursor:pointer">✅ Pregnancy Confirmed (mark after confirmation)</label>
+    </div>
+</div>
+<div class="col-md-6" id="confirm-date-group" style="{% if not form.is_successful.value %}display:none{% endif %}">
+    <label class="form-label-custom">Pregnancy Confirmation Date</label>
+    <input type="date" name="confirmed_pregnancy_date" value="{{ form.confirmed_pregnancy_date.value|default:'' }}" class="form-control-custom">
+</div>
+<div class="col-12">
+    <label class="form-label-custom">Notes</label>
+    <textarea name="notes" class="form-control-custom" rows="3" placeholder="Any observations...">{{ form.notes.value|default:'' }}</textarea>
+</div>
+</div>
+<div style="margin-top:24px;padding:14px;background:#fffbeb;border-radius:12px;border:1px solid #fcd34d;font-size:13px">
+    <strong>📅 Expected Delivery:</strong> If successful, the expected calving date will be <strong>283 days</strong> from the insemination date. An SMS reminder will be auto-created.
+</div>
+<div style="display:flex;gap:12px;margin-top:20px">
+    <button type="submit" class="btn-primary-custom"><i class="bi bi-check-lg"></i> Save Record</button>
+    <a href="{% url 'cow_detail' cow.pk %}" class="btn-outline-custom">Cancel</a>
+</div>
+</form>
+</div>
+</div>
+</div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.getElementById('is_successful').addEventListener('change', function() {
+    document.getElementById('confirm-date-group').style.display = this.checked ? 'block' : 'none';
+});
+</script>
+{% endblock %}

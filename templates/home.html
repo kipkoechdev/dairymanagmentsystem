@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block auth_content %}
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome — Salron Dairy Farm</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: #0d3d2b; color: white; min-height: 100vh; }
+.hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px 20px; background-image: radial-gradient(circle at 20% 80%, rgba(45,158,98,0.4) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(232,164,48,0.2) 0%, transparent 50%); }
+.hero-badge { background: rgba(232,164,48,0.2); border: 1px solid rgba(232,164,48,0.4); color: #e8a430; padding: 6px 16px; border-radius: 50px; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 24px; display: inline-block; }
+h1 { font-family: 'Syne', sans-serif; font-size: clamp(40px, 8vw, 80px); font-weight: 800; line-height: 1; margin-bottom: 20px; }
+h1 span { color: #4dba7f; }
+.hero-sub { font-size: 18px; color: rgba(255,255,255,0.7); max-width: 500px; line-height: 1.6; margin-bottom: 40px; }
+.hero-btns { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+.btn-hero { padding: 14px 32px; border-radius: 14px; font-size: 15px; font-weight: 700; text-decoration: none; transition: all 0.2s; }
+.btn-primary-h { background: #2d9e62; color: white; }
+.btn-primary-h:hover { background: #1a6642; color: white; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(45,158,98,0.4); }
+.btn-outline-h { border: 2px solid rgba(255,255,255,0.3); color: white; }
+.btn-outline-h:hover { border-color: white; background: rgba(255,255,255,0.1); }
+.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; max-width: 800px; margin-top: 60px; }
+.feature { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 24px; text-align: left; }
+.feature .fi { font-size: 28px; margin-bottom: 10px; }
+.feature h4 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.feature p { font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="hero">
+    <div class="hero-badge">🐄 Salron Dairy Farm</div>
+    <h1>Milk<span>Master</span><br>Pro</h1>
+    <p class="hero-sub">Complete dairy farm management — track cows, milk production, expenses, insemination schedules, and get SMS reminders automatically.</p>
+    <div class="hero-btns">
+        <a href="{% url 'register' %}" class="btn-hero btn-primary-h">Get Started Free →</a>
+        <a href="{% url 'login' %}" class="btn-hero btn-outline-h">Sign In</a>
+    </div>
+    <div class="features">
+        <div class="feature"><div class="fi">🐄</div><h4>Herd Management</h4><p>Track every cow with full records, photos, lineage & health history</p></div>
+        <div class="feature"><div class="fi">🥛</div><h4>Milk Tracking</h4><p>Daily milk recording, bulk entry, reports & sales management</p></div>
+        <div class="feature"><div class="fi">💉</div><h4>Breeding Records</h4><p>Insemination tracking with auto-calculated delivery dates</p></div>
+        <div class="feature"><div class="fi">📱</div><h4>SMS Reminders</h4><p>Automatic alerts for insemination, delivery & vet appointments</p></div>
+        <div class="feature"><div class="fi">💸</div><h4>Finance Tracking</h4><p>Expenses, revenue, and profit/loss reports at a glance</p></div>
+        <div class="feature"><div class="fi">📊</div><h4>Analytics</h4><p>Charts and reports to optimize your farm's performance</p></div>
+    </div>
+</div>
+</body>
+</html>
+{% endblock %}

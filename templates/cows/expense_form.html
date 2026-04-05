@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Add Expense{% endblock %}
+{% block page_title %}Add Expense{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div><h2>Add Expense 💸</h2></div>
+    <a href="{% url 'expense_list' %}" class="btn-outline-custom"><i class="bi bi-arrow-left"></i> Back</a>
+</div>
+<div class="row justify-content-center">
+<div class="col-lg-6">
+<div class="card-custom">
+<div class="card-header-custom"><h5>Expense Details</h5></div>
+<div class="card-body-custom">
+<form method="post">{% csrf_token %}
+<div class="form-group-custom">
+    <label class="form-label-custom">Date *</label>
+    <input type="date" name="date" value="{{ form.date.value|default:'' }}" class="form-control-custom" required>
+</div>
+<div class="form-group-custom">
+    <label class="form-label-custom">Category *</label>
+    <select name="category" class="form-control-custom" required>
+        {% for val, label in form.fields.category.choices %}<option value="{{ val }}" {% if form.category.value == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+</div>
+<div class="form-group-custom">
+    <label class="form-label-custom">Description *</label>
+    <input type="text" name="description" class="form-control-custom" value="{{ form.description.value|default:'' }}" required placeholder="e.g. Purchased 50kg dairy meal">
+</div>
+<div class="form-group-custom">
+    <label class="form-label-custom">Amount (KES) *</label>
+    <input type="number" name="amount" class="form-control-custom" value="{{ form.amount.value|default:'' }}" required step="0.01" min="0" placeholder="0.00">
+</div>
+<div class="form-group-custom">
+    <label class="form-label-custom">Paid To</label>
+    <input type="text" name="paid_to" class="form-control-custom" value="{{ form.paid_to.value|default:'' }}" placeholder="Supplier/vendor name">
+</div>
+<div class="form-group-custom">
+    <label class="form-label-custom">Receipt Number</label>
+    <input type="text" name="receipt_number" class="form-control-custom" value="{{ form.receipt_number.value|default:'' }}" placeholder="Optional">
+</div>
+<div style="display:flex;gap:12px;margin-top:20px">
+    <button type="submit" class="btn-primary-custom"><i class="bi bi-check-lg"></i> Save Expense</button>
+    <a href="{% url 'expense_list' %}" class="btn-outline-custom">Cancel</a>
+</div>
+</form>
+</div>
+</div>
+</div>
+</div>
+{% endblock %}

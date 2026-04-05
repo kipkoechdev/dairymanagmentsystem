@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}Expected Dates — {{ farm.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>📅 Expected Dates</h2>
+    <a href="{% url 'cow_list' %}" class="btn btn-outline-secondary btn-sm">← Back to Cows</a>
+  </div>
+
+  {# ── Overdue alerts ── #}
+  {% if overdue_inseminations %}
+  <div class="alert alert-danger">
+    <strong>⚠️ Overdue Inseminations:</strong>
+    {% for d in overdue_inseminations %}
+      <span class="badge bg-danger me-1">{{ d.cow.name }} ({{ d.insemination_days|abs }} day{{ d.insemination_days|abs|pluralize }} overdue)</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if overdue_deliveries %}
+  <div class="alert alert-warning">
+    <strong>🍼 Overdue Deliveries:</strong>
+    {% for d in overdue_deliveries %}
+      <span class="badge bg-warning text-dark me-1">{{ d.cow.name }} ({{ d.delivery_days|abs }} day{{ d.delivery_days|abs|pluralize }} overdue)</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# ── Main table ── #}
+  <div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+      <span class="fw-semibold">All Cows — Expected Dates</span>
+      <small class="text-muted">Today: {{ today }}</small>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Cow</th>
+            <th>Tag</th>
+            <th>Status</th>
+            <th>Expected Insemination</th>
+            <th>Expected Delivery</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in cow_data %}
+          <tr>
+            <td>
+              <a href="{% url 'cow_detail' d.cow.pk %}" class="fw-semibold text-decoration-none">{{ d.cow.name }}</a>
+            </td>
+            <td><span class="badge bg-secondary">{{ d.cow.tag_number }}</span></td>
+            <td>
+              {% if d.cow.status == 'lactating' %}<span class="badge bg-success">Lactating</span>
+              {% elif d.cow.status == 'pregnant' %}<span class="badge bg-primary">Pregnant</span>
+              {% elif d.cow.status == 'sick' %}<span class="badge bg-danger">Sick</span>
+              {% else %}<span class="badge bg-secondary">{{ d.cow.status|capfirst }}</span>{% endif %}
+            </td>
+
+            {# Expected Insemination #}
+            <td>
+              {% if d.expected_insemination %}
+                {% if d.insemination_days is not None %}
+                  {% if d.insemination_days < 0 %}
+                    <span class="text-danger fw-bold">{{ d.expected_insemination }} <small>({{ d.insemination_days|abs }}d overdue)</small></span>
+                  {% elif d.insemination_days == 0 %}
+                    <span class="text-warning fw-bold">{{ d.expected_insemination }} <small>(Today!)</small></span>
+                  {% elif d.insemination_days <= 3 %}
+                    <span class="text-warning">{{ d.expected_insemination }} <small>(in {{ d.insemination_days }}d)</small></span>
+                  {% else %}
+                    <span class="text-success">{{ d.expected_insemination }} <small>(in {{ d.insemination_days }}d)</small></span>
+                  {% endif %}
+                {% endif %}
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+
+            {# Expected Delivery #}
+            <td>
+              {% if d.expected_delivery %}
+                {% if d.delivery_days is not None %}
+                  {% if d.delivery_days < 0 %}
+                    <span class="text-danger fw-bold">{{ d.expected_delivery }} <small>({{ d.delivery_days|abs }}d overdue)</small></span>
+                  {% elif d.delivery_days == 0 %}
+                    <span class="text-warning fw-bold">{{ d.expected_delivery }} <small>(Today!)</small></span>
+                  {% elif d.delivery_days <= 7 %}
+                    <span class="text-warning">{{ d.expected_delivery }} <small>(in {{ d.delivery_days }}d)</small></span>
+                  {% else %}
+                    <span class="text-primary">{{ d.expected_delivery }} <small>(in {{ d.delivery_days }}d)</small></span>
+                  {% endif %}
+                {% endif %}
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+
+            <td class="text-center">
+              <a href="{% url 'set_expected_dates' d.cow.pk %}" class="btn btn-sm btn-outline-primary">
+                ✏️ Set Dates
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">No active cows found. <a href="{% url 'cow_add' %}">Add a cow</a>.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

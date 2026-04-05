@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>{{ title }}</h2>
+        <p>{% if cow %}Editing {{ cow.name }} ({{ cow.tag_number }}){% else %}Fill in the cow's details below{% endif %}</p>
+    </div>
+    <a href="{% url 'cow_list' %}" class="btn-outline-custom">
+        <i class="bi bi-arrow-left"></i> Back to Herd
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <h5>🐄 Cow Information</h5>
+            </div>
+            <div class="card-body-custom">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Tag Number *</label>
+                            <input type="text" name="tag_number" class="form-control-custom"
+                                   value="{{ form.tag_number.value|default:'' }}" required placeholder="e.g. KE-001">
+                            {% if form.tag_number.errors %}<small style="color:red">{{ form.tag_number.errors.0 }}</small>{% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Cow Name *</label>
+                            <input type="text" name="name" class="form-control-custom"
+                                   value="{{ form.name.value|default:'' }}" required placeholder="e.g. Daisy">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Breed *</label>
+                            <select name="breed" class="form-control-custom" required>
+                                {% for val, label in form.fields.breed.choices %}
+                                <option value="{{ val }}" {% if form.breed.value == val %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Color</label>
+                            <select name="color" class="form-control-custom">
+                                {% for val, label in form.fields.color.choices %}
+                                <option value="{{ val }}" {% if form.color.value == val %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Date of Birth *</label>
+                            <input type="date" name="date_of_birth" class="form-control-custom"
+                                   value="{{ form.date_of_birth.value|default:'' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Weight (kg)</label>
+                            <input type="number" name="weight_kg" class="form-control-custom" step="0.1"
+                                   value="{{ form.weight_kg.value|default:'' }}" placeholder="e.g. 450">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Status</label>
+                            <select name="status" class="form-control-custom">
+                                {% for val, label in form.fields.status.choices %}
+                                <option value="{{ val }}" {% if form.status.value == val %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Mother (if known)</label>
+                            <select name="mother" class="form-control-custom">
+                                <option value="">— Select Mother —</option>
+                                {% for m in form.fields.mother.queryset %}
+                                <option value="{{ m.pk }}" {% if form.mother.value|stringformat:'s' == m.pk|stringformat:'s' %}selected{% endif %}>{{ m }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Purchase Date</label>
+                            <input type="date" name="purchase_date" class="form-control-custom"
+                                   value="{{ form.purchase_date.value|default:'' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Purchase Price (KES)</label>
+                            <input type="number" name="purchase_price" class="form-control-custom" step="0.01"
+                                   value="{{ form.purchase_price.value|default:'' }}" placeholder="e.g. 80000">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Photo</label>
+                            <input type="file" name="photo" class="form-control-custom" accept="image/*">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label-custom">Notes</label>
+                            <textarea name="notes" class="form-control-custom" rows="3" placeholder="Any additional information...">{{ form.notes.value|default:'' }}</textarea>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:24px;display:flex;gap:12px">
+                        <button type="submit" class="btn-primary-custom">
+                            <i class="bi bi-check-lg"></i> {% if cow %}Save Changes{% else %}Add Cow{% endif %}
+                        </button>
+                        <a href="{% url 'cow_list' %}" class="btn-outline-custom">Cancel</a>
+                        {% if cow %}
+                        <a href="{% url 'cow_retire' cow.pk %}" style="margin-left:auto;color:#dc2626;text-decoration:none;font-size:14px;align-self:center">
+                            <i class="bi bi-trash"></i> Retire/Remove
+                        </a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}SMS Reminders{% endblock %}
+{% block page_title %}SMS Reminders{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>SMS Reminders 🔔</h2>
+        <p>{{ pending }} pending reminder{{ pending|pluralize }}</p>
+    </div>
+    <a href="{% url 'reminder_add' %}" class="btn-primary-custom"><i class="bi bi-plus-lg"></i> New Reminder</a>
+</div>
+
+<div class="card-custom">
+<div class="card-header-custom">
+    <h5><i class="bi bi-chat-square-dots" style="color:var(--green-bright)"></i> All Reminders</h5>
+    <div style="font-size:13px;color:var(--text-muted)">Reminders are auto-created for insemination & delivery dates</div>
+</div>
+{% if reminders %}
+<table class="table-custom">
+<thead><tr><th>Type</th><th>Cow</th><th>Scheduled</th><th>Phone</th><th>Message</th><th>Status</th><th>Action</th></tr></thead>
+<tbody>
+{% for r in reminders %}
+<tr>
+    <td>
+        <span style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;
+            {% if r.reminder_type == 'insemination' %}background:#dbeafe;color:#1d4ed8
+            {% elif r.reminder_type == 'delivery' %}background:#fce7f3;color:#be185d
+            {% elif r.reminder_type == 'vaccination' %}background:#dcfce7;color:#15803d
+            {% else %}background:#f3f4f6;color:#6b7280{% endif %}">
+            {% if r.reminder_type == 'insemination' %}💉{% elif r.reminder_type == 'delivery' %}🍼{% elif r.reminder_type == 'vaccination' %}💊{% else %}📅{% endif %}
+            {{ r.get_reminder_type_display }}
+        </span>
+    </td>
+    <td>{% if r.cow %}<a href="{% url 'cow_detail' r.cow.pk %}" style="color:var(--green-bright);font-weight:600">{{ r.cow.name }}</a>{% else %}<span style="color:var(--text-muted)">Farm-wide</span>{% endif %}</td>
+    <td>{{ r.scheduled_date|date:"d M Y" }}</td>
+    <td style="font-size:13px;color:var(--text-muted)">{{ r.phone_number }}</td>
+    <td style="max-width:200px;font-size:12px;color:var(--text-muted)">{{ r.message|truncatechars:60 }}</td>
+    <td>
+        <span style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;
+            {% if r.status == 'sent' %}background:#dcfce7;color:#15803d
+            {% elif r.status == 'failed' %}background:#fee2e2;color:#dc2626
+            {% elif r.status == 'pending' %}background:#fef3c7;color:#d97706
+            {% else %}background:#f3f4f6;color:#6b7280{% endif %}">
+            {{ r.status|title }}
+        </span>
+    </td>
+    <td>
+        {% if r.status == 'pending' %}
+        <a href="{% url 'send_reminder' r.pk %}" class="btn-primary-custom" style="padding:6px 12px;font-size:12px"
+           onclick="return confirm('Send SMS now?')">
+            <i class="bi bi-send"></i> Send Now
+        </a>
+        {% elif r.status == 'sent' %}
+        <span style="color:var(--text-muted);font-size:12px">Sent {{ r.sent_at|date:"d M" }}</span>
+        {% endif %}
+    </td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<div class="empty-state" style="padding:60px">
+    <div class="empty-icon">🔔</div>
+    <h4>No reminders yet</h4>
+    <p>Reminders are automatically created when you add insemination or health records. You can also create custom reminders.</p>
+    <a href="{% url 'reminder_add' %}" class="btn-primary-custom">Create Reminder</a>
+</div>
+{% endif %}
+
+{% endblock %}

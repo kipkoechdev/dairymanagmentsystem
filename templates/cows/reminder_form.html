@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}New Reminder{% endblock %}
+{% block page_title %}New SMS Reminder{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div><h2>New SMS Reminder 📱</h2></div>
+    <a href="{% url 'reminders_list' %}" class="btn-outline-custom"><i class="bi bi-arrow-left"></i> Back</a>
+</div>
+<div class="row justify-content-center"><div class="col-lg-6">
+<div class="card-custom"><div class="card-header-custom"><h5>📱 Reminder Details</h5></div>
+<div class="card-body-custom">
+<form method="post">{% csrf_token %}
+<div class="form-group-custom"><label class="form-label-custom">Cow (optional)</label>
+    <select name="cow" class="form-control-custom">
+        <option value="">— Farm-wide reminder —</option>
+        {% for cow in form.fields.cow.queryset %}<option value="{{ cow.pk }}">{{ cow.name }} ({{ cow.tag_number }})</option>{% endfor %}
+    </select></div>
+<div class="form-group-custom"><label class="form-label-custom">Reminder Type *</label>
+    <select name="reminder_type" class="form-control-custom" required>
+        {% for v,l in form.fields.reminder_type.choices %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+    </select></div>
+<div class="form-group-custom"><label class="form-label-custom">Phone Number *</label>
+    <input type="text" name="phone_number" class="form-control-custom" value="{{ farm.phone }}" required placeholder="+254700000000"></div>
+<div class="form-group-custom"><label class="form-label-custom">Scheduled Date *</label>
+    <input type="date" name="scheduled_date" class="form-control-custom" required></div>
+<div class="form-group-custom"><label class="form-label-custom">Message *</label>
+    <textarea name="message" class="form-control-custom" rows="4" required placeholder="Your reminder message..."></textarea></div>
+<div style="display:flex;gap:12px">
+    <button type="submit" class="btn-primary-custom"><i class="bi bi-check-lg"></i> Create Reminder</button>
+    <a href="{% url 'reminders_list' %}" class="btn-outline-custom">Cancel</a>
+</div>
+</form>
+</div></div>
+</div></div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Weight Record{% endblock %}
+{% block page_title %}Weight Record{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div><h2>Weight Record ⚖️</h2><p>For: <strong>{{ cow.name }}</strong> — Current: {{ cow.weight_kg|default:"Not recorded" }}{% if cow.weight_kg %}kg{% endif %}</p></div>
+    <a href="{% url 'cow_detail' cow.pk %}" class="btn-outline-custom"><i class="bi bi-arrow-left"></i> Back</a>
+</div>
+<div class="row justify-content-center"><div class="col-lg-5">
+<div class="card-custom"><div class="card-header-custom"><h5>⚖️ Weight Entry</h5></div>
+<div class="card-body-custom">
+<form method="post">{% csrf_token %}
+<div class="form-group-custom"><label class="form-label-custom">Date *</label>
+    <input type="date" name="date" value="{{ form.date.value|default:'' }}" class="form-control-custom" required></div>
+<div class="form-group-custom"><label class="form-label-custom">Weight (kg) *</label>
+    <input type="number" name="weight_kg" class="form-control-custom" step="0.1" min="0" value="{{ form.weight_kg.value|default:'' }}" required placeholder="e.g. 450.5"></div>
+<div class="form-group-custom"><label class="form-label-custom">Body Condition Score (1–5)</label>
+    <input type="number" name="body_condition_score" class="form-control-custom" step="0.5" min="1" max="5" value="{{ form.body_condition_score.value|default:'' }}" placeholder="e.g. 3.5">
+    <small style="color:var(--text-muted);font-size:11px">1=Emaciated, 3=Ideal, 5=Obese</small></div>
+<div class="form-group-custom"><label class="form-label-custom">Notes</label>
+    <textarea name="notes" class="form-control-custom" rows="2">{{ form.notes.value|default:'' }}</textarea></div>
+<div style="display:flex;gap:12px">
+    <button type="submit" class="btn-primary-custom"><i class="bi bi-check-lg"></i> Save</button>
+    <a href="{% url 'cow_detail' cow.pk %}" class="btn-outline-custom">Cancel</a>
+</div>
+</form>
+</div></div>
+</div></div>
+{% endblock %}

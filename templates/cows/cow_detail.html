@@ -1,0 +1,353 @@
+{% extends 'base.html' %}
+{% block title %}{{ cow.name }}{% endblock %}
+{% block page_title %}{{ cow.name }}{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+    <div style="display:flex;align-items:center;gap:16px">
+        <a href="{% url 'cow_list' %}" style="color:var(--text-muted);text-decoration:none;font-size:14px">
+            <i class="bi bi-arrow-left"></i> My Cows
+        </a>
+        <div>
+            <div style="display:flex;align-items:center;gap:10px">
+                <h2 style="margin:0">{{ cow.name }}</h2>
+                <span class="badge-status badge-{{ cow.status }}">{{ cow.get_status_display }}</span>
+            </div>
+            <div style="color:var(--text-muted);font-size:14px;margin-top:2px">
+                Tag: <strong>{{ cow.tag_number }}</strong> &bull; {{ cow.get_breed_display }} &bull; Age: {{ cow.age }}
+            </div>
+        </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <a href="{% url 'insemination_add' cow.pk %}" class="btn-outline-custom" style="font-size:12px">
+            💉 Inseminate
+        </a>
+        <a href="{% url 'calving_add' cow.pk %}" class="btn-outline-custom" style="font-size:12px">
+            🍼 Calving
+        </a>
+        <a href="{% url 'health_add' cow.pk %}" class="btn-outline-custom" style="font-size:12px">
+            🏥 Health
+        </a>
+        <a href="{% url 'weight_add' cow.pk %}" class="btn-outline-custom" style="font-size:12px">
+            ⚖️ Weight
+        </a>
+        <a href="{% url 'cow_edit' cow.pk %}" class="btn-primary-custom" style="font-size:12px">
+            <i class="bi bi-pencil"></i> Edit
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left: Profile -->
+    <div class="col-lg-4">
+        <!-- Cow Profile Card -->
+        <div class="card-custom mb-4">
+            <div style="background:linear-gradient(135deg,#dcfce7,#bbf7d0);height:200px;display:flex;align-items:center;justify-content:center;font-size:72px">
+                {% if cow.photo %}
+                    <img src="{{ cow.photo.url }}" style="width:100%;height:200px;object-fit:cover">
+                {% else %}🐄{% endif %}
+            </div>
+            <div class="card-body-custom">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                    <div>
+                        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px">Tag No.</div>
+                        <div style="font-weight:600;color:var(--green-bright)">{{ cow.tag_number }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px">Breed</div>
+                        <div style="font-weight:600">{{ cow.get_breed_display }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px">Birth Date</div>
+                        <div style="font-weight:600">{{ cow.date_of_birth|date:"d M Y" }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px">Age</div>
+                        <div style="font-weight:600">{{ cow.age }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px">Color</div>
+                        <div style="font-weight:600">{{ cow.get_color_display }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px">Weight</div>
+                        <div style="font-weight:600">{{ cow.weight_kg|default:"—" }} {% if cow.weight_kg %}kg{% endif %}</div>
+                    </div>
+                    {% if cow.purchase_date %}
+                    <div>
+                        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px">Purchased</div>
+                        <div style="font-weight:600">{{ cow.purchase_date|date:"d M Y" }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px">Price</div>
+                        <div style="font-weight:600">KES {{ cow.purchase_price|default:"—" }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if cow.notes %}
+                <div style="margin-top:16px;padding:12px;background:#f9fafb;border-radius:10px;font-size:13px;color:var(--text-muted)">
+                    {{ cow.notes }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Upcoming Events -->
+        {% if upcoming_events %}
+        <div class="card-custom mb-4">
+            <div class="card-header-custom">
+                <h5><i class="bi bi-calendar-check" style="color:var(--gold)"></i> Upcoming Events</h5>
+            </div>
+            <div class="card-body-custom" style="padding:0">
+                {% for event_type, days, event_date in upcoming_events %}
+                <div style="padding:14px 20px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;gap:12px">
+                    <div style="font-size:24px">{% if event_type == 'Insemination' %}💉{% else %}🍼{% endif %}</div>
+                    <div style="flex:1">
+                        <div style="font-weight:600;font-size:14px">{{ event_type }}</div>
+                        <div style="font-size:12px;color:var(--text-muted)">{{ event_date|date:"d M Y" }}</div>
+                    </div>
+                    <span style="{% if days <= 5 %}background:#fee2e2;color:#dc2626{% else %}background:#dcfce7;color:#15803d{% endif %};padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700">
+                        {{ days }}d
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- This Month's Stats -->
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <h5><i class="bi bi-graph-up" style="color:var(--green-bright)"></i> This Month</h5>
+            </div>
+            <div class="card-body-custom">
+                <div style="text-align:center;padding:12px 0">
+                    <div style="font-family:'Syne',sans-serif;font-size:48px;font-weight:800;color:var(--green-deep)">
+                        {{ cow.total_milk_this_month|floatformat:0 }}
+                    </div>
+                    <div style="color:var(--text-muted);font-size:14px">Litres Produced</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Records -->
+    <div class="col-lg-8">
+        <!-- Milk Chart -->
+        <div class="card-custom mb-4">
+            <div class="card-header-custom">
+                <h5><i class="bi bi-droplet" style="color:#2563eb"></i> 30-Day Milk Production</h5>
+            </div>
+            <div class="card-body-custom">
+                <div style="height:200px">
+                    <canvas id="cowMilkChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="card-custom">
+            <div style="padding:0 20px;border-bottom:1px solid var(--border)">
+                <ul class="nav" style="gap:0" id="cowTabs">
+                    <li><a class="tab-link active" href="#" onclick="showTab('milk')">🥛 Milk Records</a></li>
+                    <li><a class="tab-link" href="#" onclick="showTab('insem')">💉 Inseminations</a></li>
+                    <li><a class="tab-link" href="#" onclick="showTab('health')">🏥 Health</a></li>
+                    <li><a class="tab-link" href="#" onclick="showTab('calving')">🍼 Calvings</a></li>
+                </ul>
+            </div>
+
+            <!-- Milk Records -->
+            <div id="tab-milk" class="tab-pane">
+                {% if milk_records %}
+                <table class="table-custom">
+                    <thead><tr><th>Date</th><th>Morning</th><th>Midday</th><th>Evening</th><th>Total</th><th>Quality</th></tr></thead>
+                    <tbody>
+                        {% for m in milk_records %}
+                        <tr>
+                            <td>{{ m.date|date:"d M Y" }}</td>
+                            <td>{{ m.morning_litres }}L</td>
+                            <td>{{ m.midday_litres }}L</td>
+                            <td>{{ m.evening_litres }}L</td>
+                            <td><strong style="color:var(--green-bright)">{{ m.total_litres }}L</strong></td>
+                            <td><span style="font-size:12px">{{ m.get_milk_quality_display }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state" style="padding:40px">
+                    <div class="empty-icon">🥛</div>
+                    <p>No milk records yet</p>
+                    <a href="{% url 'milk_entry' %}" class="btn-primary-custom">Record Milk</a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Inseminations -->
+            <div id="tab-insem" class="tab-pane" style="display:none">
+                <div style="padding:16px;border-bottom:1px solid var(--border)">
+                    <a href="{% url 'insemination_add' cow.pk %}" class="btn-primary-custom" style="font-size:13px">
+                        💉 Add Insemination Record
+                    </a>
+                </div>
+                {% if inseminations %}
+                <table class="table-custom">
+                    <thead><tr><th>Date</th><th>Method</th><th>Bull/Breed</th><th>Technician</th><th>Pregnant?</th><th>Expected Delivery</th></tr></thead>
+                    <tbody>
+                        {% for i in inseminations %}
+                        <tr>
+                            <td>{{ i.insemination_date|date:"d M Y" }}</td>
+                            <td>{{ i.get_method_display }}</td>
+                            <td>{{ i.bull_breed|default:"—" }}</td>
+                            <td>{{ i.technician|default:"—" }}</td>
+                            <td>
+                                {% if i.is_successful %}
+                                    <span style="color:#15803d;font-weight:700">✅ Yes</span>
+                                {% else %}
+                                    <span style="color:#6b7280">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if i.is_successful %}
+                                    {{ i.expected_delivery|date:"d M Y" }}
+                                    <br><small style="color:var(--text-muted)">{{ i.days_to_delivery }} days away</small>
+                                {% else %}—{% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state" style="padding:40px">
+                    <div class="empty-icon">💉</div>
+                    <p>No insemination records</p>
+                    <a href="{% url 'insemination_add' cow.pk %}" class="btn-primary-custom">Add Record</a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Health -->
+            <div id="tab-health" class="tab-pane" style="display:none">
+                <div style="padding:16px;border-bottom:1px solid var(--border)">
+                    <a href="{% url 'health_add' cow.pk %}" class="btn-primary-custom" style="font-size:13px">
+                        🏥 Add Health Record
+                    </a>
+                </div>
+                {% if health_records %}
+                <table class="table-custom">
+                    <thead><tr><th>Date</th><th>Type</th><th>Diagnosis</th><th>Medicine</th><th>Vet</th><th>Cost</th></tr></thead>
+                    <tbody>
+                        {% for h in health_records %}
+                        <tr>
+                            <td>{{ h.date|date:"d M Y" }}</td>
+                            <td>{{ h.get_record_type_display }}</td>
+                            <td>{{ h.diagnosis|default:"—"|truncatechars:40 }}</td>
+                            <td>{{ h.medicine|default:"—" }}</td>
+                            <td>{{ h.vet_name|default:"—" }}</td>
+                            <td>KES {{ h.cost }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state" style="padding:40px">
+                    <div class="empty-icon">🏥</div>
+                    <p>No health records</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Calvings -->
+            <div id="tab-calving" class="tab-pane" style="display:none">
+                <div style="padding:16px;border-bottom:1px solid var(--border)">
+                    <a href="{% url 'calving_add' cow.pk %}" class="btn-primary-custom" style="font-size:13px">
+                        🍼 Add Calving Record
+                    </a>
+                </div>
+                {% if calvings %}
+                <table class="table-custom">
+                    <thead><tr><th>Date</th><th>Calf Tag</th><th>Calf Name</th><th>Gender</th><th>Weight</th><th>Ease</th></tr></thead>
+                    <tbody>
+                        {% for c in calvings %}
+                        <tr>
+                            <td>{{ c.calving_date|date:"d M Y" }}</td>
+                            <td>{{ c.calf_tag|default:"—" }}</td>
+                            <td>{{ c.calf_name|default:"—" }}</td>
+                            <td>{{ c.get_calf_gender_display }}</td>
+                            <td>{{ c.calf_weight_kg|default:"—" }}{% if c.calf_weight_kg %}kg{% endif %}</td>
+                            <td>{{ c.get_calving_ease_display }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state" style="padding:40px">
+                    <div class="empty-icon">🍼</div>
+                    <p>No calving records</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.tab-link {
+    display: inline-block;
+    padding: 14px 16px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+.tab-link.active, .tab-link:hover {
+    color: var(--green-bright);
+    border-bottom-color: var(--green-bright);
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showTab(name) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+    document.getElementById('tab-' + name).style.display = 'block';
+    document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('active'));
+    event.target.classList.add('active');
+    event.preventDefault();
+}
+
+const cowMilkCtx = document.getElementById('cowMilkChart').getContext('2d');
+new Chart(cowMilkCtx, {
+    type: 'line',
+    data: {
+        labels: {{ chart_labels|safe }},
+        datasets: [{
+            label: 'Litres',
+            data: {{ chart_data|safe }},
+            fill: true,
+            backgroundColor: 'rgba(45,158,98,0.08)',
+            borderColor: '#2d9e62',
+            borderWidth: 2.5,
+            pointBackgroundColor: '#2d9e62',
+            pointRadius: 3,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } },
+            x: { grid: { display: false }, ticks: { maxTicksLimit: 10, font: { size: 10 } } }
+        }
+    }
+});
+</script>
+{% endblock %}

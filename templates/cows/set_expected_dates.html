@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}Set Expected Dates — {{ cow.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 560px;">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>📅 Set Expected Dates</h2>
+    <a href="{% url 'expected_dates_list' %}" class="btn btn-outline-secondary btn-sm">← Back</a>
+  </div>
+
+  {# Cow summary card #}
+  <div class="card mb-4 border-0 bg-light">
+    <div class="card-body py-3">
+      <div class="d-flex align-items-center gap-3">
+        {% if cow.photo %}
+          <img src="{{ cow.photo.url }}" alt="{{ cow.name }}" class="rounded-circle" style="width:52px;height:52px;object-fit:cover;">
+        {% else %}
+          <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white fw-bold" style="width:52px;height:52px;font-size:1.3rem;">🐄</div>
+        {% endif %}
+        <div>
+          <div class="fw-bold fs-5">{{ cow.name }}</div>
+          <div class="text-muted small">Tag: {{ cow.tag_number }} &nbsp;|&nbsp; {{ cow.get_status_display }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body p-4">
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        {# Insemination date #}
+        <div class="mb-4">
+          <label for="{{ form.expected_insemination_date.id_for_label }}" class="form-label fw-semibold">
+            💉 Expected Insemination Date
+          </label>
+          {{ form.expected_insemination_date }}
+          {% if form.expected_insemination_date.errors %}
+            <div class="text-danger small mt-1">{{ form.expected_insemination_date.errors|join:", " }}</div>
+          {% endif %}
+          <div class="form-text">SMS reminders will be sent 7 days, 3 days, 1 day before, and on this date.</div>
+        </div>
+
+        {# Delivery date #}
+        <div class="mb-4">
+          <label for="{{ form.expected_delivery_date.id_for_label }}" class="form-label fw-semibold">
+            🍼 Expected Delivery / Calving Date
+          </label>
+          {{ form.expected_delivery_date }}
+          {% if form.expected_delivery_date.errors %}
+            <div class="text-danger small mt-1">{{ form.expected_delivery_date.errors|join:", " }}</div>
+          {% endif %}
+          <div class="form-text">SMS reminders will be sent 14 days, 7 days, 3 days, 1 day before, and on this date. Cow status will automatically be updated to <strong>Pregnant</strong>.</div>
+        </div>
+
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="d-grid gap-2">
+          <button type="submit" class="btn btn-primary">💾 Save & Schedule Reminders</button>
+          <a href="{% url 'expected_dates_list' %}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

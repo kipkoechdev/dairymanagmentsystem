@@ -1,0 +1,9 @@
+Django>=4.2,<5.0
+django-crispy-forms>=2.0
+crispy-bootstrap5>=0.7
+Pillow>=10.0
+africastalking>=1.2.5
+celery>=5.3
+django-celery-beat>=2.5
+redis>=5.0
+python-decouple>=3.8

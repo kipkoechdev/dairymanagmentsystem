@@ -1,0 +1,332 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>Good {% now "H" as hour %}{% if hour < "12" %}Morning{% elif hour < "17" %}Afternoon{% else %}Evening{% endif %}, {{ user.first_name }}! 👋</h2>
+        <p>{{ farm.name }} &mdash; {% now "l, d F Y" %}</p>
+    </div>
+    <div style="display:flex;gap:10px">
+        <a href="{% url 'milk_bulk_entry' %}" class="btn-outline-custom">
+            <i class="bi bi-table"></i> Bulk Milk Entry
+        </a>
+        <a href="{% url 'cow_add' %}" class="btn-primary-custom">
+            <i class="bi bi-plus-lg"></i> Add Cow
+        </a>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="stat-card stat-green">
+            <div class="stat-icon"><i class="bi bi-emoji-smile"></i></div>
+            <div class="stat-value">{{ total_cows }}</div>
+            <div class="stat-label">Total Active Cows</div>
+            <div class="stat-trend" style="color:var(--green-bright)">
+                <i class="bi bi-circle-fill" style="font-size:8px"></i> {{ lactating }} lactating
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card stat-blue">
+            <div class="stat-icon"><i class="bi bi-droplet-fill"></i></div>
+            <div class="stat-value">{{ milk_today|floatformat:1 }}L</div>
+            <div class="stat-label">Milk Produced Today</div>
+            <div class="stat-trend" style="color:#2563eb">
+                <i class="bi bi-calendar3"></i> {{ milk_this_month|floatformat:0 }}L this month
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card stat-gold">
+            <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
+            <div class="stat-value">{{ revenue_this_month|floatformat:0 }}</div>
+            <div class="stat-label">Revenue (KES) This Month</div>
+            <div class="stat-trend" style="color:var(--gold)">
+                {% if profit >= 0 %}
+                <i class="bi bi-arrow-up"></i> KES {{ profit|floatformat:0 }} profit
+                {% else %}
+                <i class="bi bi-arrow-down"></i> KES {{ profit|floatformat:0 }} loss
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card {% if sick > 0 %}stat-red{% else %}stat-green{% endif %}">
+            <div class="stat-icon"><i class="bi bi-heart-pulse"></i></div>
+            <div class="stat-value">{{ sick }}</div>
+            <div class="stat-label">Cows Under Treatment</div>
+            <div class="stat-trend" style="color:var(--green-bright)">
+                <i class="bi bi-heart"></i> {{ pregnant }} pregnant
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row g-2 mb-4">
+    {% with actions='' %}
+    <div class="col-4 col-md-2">
+        <a href="{% url 'milk_entry' %}" class="quick-action">
+            <div class="qa-icon" style="background:#dbeafe;color:#1d4ed8">🥛</div>
+            <span>Record Milk</span>
+        </a>
+    </div>
+    <div class="col-4 col-md-2">
+        <a href="{% url 'cow_add' %}" class="quick-action">
+            <div class="qa-icon" style="background:#dcfce7;color:#15803d">🐄</div>
+            <span>Add Cow</span>
+        </a>
+    </div>
+    <div class="col-4 col-md-2">
+        <a href="{% url 'expense_add' %}" class="quick-action">
+            <div class="qa-icon" style="background:#fef3c7;color:#d97706">💸</div>
+            <span>Add Expense</span>
+        </a>
+    </div>
+    <div class="col-4 col-md-2">
+        <a href="{% url 'milk_sale_add' %}" class="quick-action">
+            <div class="qa-icon" style="background:#fce7f3;color:#be185d">💰</div>
+            <span>Record Sale</span>
+        </a>
+    </div>
+    <div class="col-4 col-md-2">
+        <a href="{% url 'reminders_list' %}" class="quick-action">
+            <div class="qa-icon" style="background:#ede9fe;color:#7c3aed">🔔</div>
+            <span>Reminders</span>
+        </a>
+    </div>
+    <div class="col-4 col-md-2">
+        <a href="{% url 'financial_report' %}" class="quick-action">
+            <div class="qa-icon" style="background:#ffedd5;color:#ea580c">📊</div>
+            <span>Reports</span>
+        </a>
+    </div>
+    {% endwith %}
+</div>
+
+<div class="row g-4">
+    <!-- Milk Chart -->
+    <div class="col-lg-7">
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <h5><i class="bi bi-bar-chart-line" style="color:var(--green-bright)"></i> 7-Day Milk Production</h5>
+                <a href="{% url 'milk_production_report' %}" style="font-size:13px;color:var(--green-bright);text-decoration:none">View Full Report →</a>
+            </div>
+            <div class="card-body-custom">
+                <div class="chart-container">
+                    <canvas id="milkChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Events -->
+    <div class="col-lg-5">
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <h5><i class="bi bi-calendar-event" style="color:var(--gold)"></i> Upcoming Events</h5>
+                <span style="font-size:12px;color:var(--text-muted)">Next 30 days</span>
+            </div>
+            <div class="card-body-custom" style="padding:0">
+                {% if upcoming_events %}
+                    {% for event in upcoming_events %}
+                    <div class="event-item" style="padding:14px 20px">
+                        <div class="event-dot {% if event.urgent %}urgent{% elif event.event_type == 'Insemination' %}insemination{% else %}delivery{% endif %}">
+                            {% if event.event_type == 'Insemination' %}💉
+                            {% else %}🍼{% endif %}
+                        </div>
+                        <div style="flex:1">
+                            <div style="font-weight:600;font-size:14px">{{ event.cow.name }}</div>
+                            <div style="font-size:12px;color:var(--text-muted)">{{ event.event_type }} &mdash; {{ event.date|date:"d M Y" }}</div>
+                        </div>
+                        <div>
+                            {% if event.urgent %}
+                            <span style="background:#fee2e2;color:#dc2626;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:700">
+                                {{ event.days }}d ⚠️
+                            </span>
+                            {% else %}
+                            <span style="background:#dcfce7;color:#15803d;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600">
+                                {{ event.days }} days
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state" style="padding:40px">
+                        <div class="empty-icon">📅</div>
+                        <p>No upcoming events in the next 30 days</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Milk Records -->
+    <div class="col-lg-8">
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <h5><i class="bi bi-droplet" style="color:#2563eb"></i> Recent Milk Records</h5>
+                <a href="{% url 'milk_entry' %}" class="btn-primary-custom" style="padding:6px 12px;font-size:12px">
+                    <i class="bi bi-plus"></i> Add
+                </a>
+            </div>
+            <div class="card-body-custom" style="padding:0">
+                {% if recent_milk %}
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>Cow</th>
+                            <th>Date</th>
+                            <th>Morning</th>
+                            <th>Evening</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for m in recent_milk %}
+                        <tr>
+                            <td>
+                                <strong>{{ m.cow.name }}</strong><br>
+                                <small style="color:var(--text-muted)">{{ m.cow.tag_number }}</small>
+                            </td>
+                            <td>{{ m.date|date:"d M" }}</td>
+                            <td>{{ m.morning_litres }}L</td>
+                            <td>{{ m.evening_litres }}L</td>
+                            <td><strong style="color:var(--green-bright)">{{ m.total_litres }}L</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state" style="padding:40px">
+                    <div class="empty-icon">🥛</div>
+                    <p>No milk records yet. Start recording!</p>
+                    <a href="{% url 'milk_entry' %}" class="btn-primary-custom">Record Milk</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Herd Summary -->
+    <div class="col-lg-4">
+        <div class="card-custom" style="height:100%">
+            <div class="card-header-custom">
+                <h5><i class="bi bi-pie-chart" style="color:var(--green-bright)"></i> Herd Summary</h5>
+            </div>
+            <div class="card-body-custom">
+                <canvas id="herdChart" style="max-height:200px"></canvas>
+                <div style="margin-top:16px">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+                        <span style="font-size:13px">🟢 Lactating</span>
+                        <strong>{{ lactating }}</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+                        <span style="font-size:13px">🔵 Pregnant</span>
+                        <strong>{{ pregnant }}</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+                        <span style="font-size:13px">🔴 Sick</span>
+                        <strong>{{ sick }}</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between">
+                        <span style="font-size:13px">⚪ Others</span>
+                        <strong>{{ total_cows|add:"-"|add:lactating|add:"-"|add:pregnant|add:"-"|add:sick }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Health Alerts -->
+    {% if health_alerts %}
+    <div class="col-12">
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <h5><i class="bi bi-exclamation-triangle-fill" style="color:var(--danger)"></i> Upcoming Vet Appointments</h5>
+            </div>
+            <div class="card-body-custom" style="padding:0">
+                <table class="table-custom">
+                    <thead>
+                        <tr><th>Cow</th><th>Appointment</th><th>Reason</th><th>Vet</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for h in health_alerts %}
+                        <tr>
+                            <td><a href="{% url 'cow_detail' h.cow.pk %}" style="color:var(--green-bright);font-weight:600">{{ h.cow.name }}</a></td>
+                            <td>{{ h.next_appointment|date:"d M Y" }}</td>
+                            <td>{{ h.diagnosis|truncatechars:50 }}</td>
+                            <td>{{ h.vet_name|default:"—" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Milk Chart
+const milkCtx = document.getElementById('milkChart').getContext('2d');
+new Chart(milkCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ chart_labels|safe }},
+        datasets: [{
+            label: 'Litres',
+            data: {{ chart_data|safe }},
+            backgroundColor: 'rgba(45,158,98,0.15)',
+            borderColor: '#2d9e62',
+            borderWidth: 2,
+            borderRadius: 8,
+            borderSkipped: false,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: { color: 'rgba(0,0,0,0.05)' },
+                ticks: { font: { family: 'DM Sans' } }
+            },
+            x: {
+                grid: { display: false },
+                ticks: { font: { family: 'DM Sans', size: 11 } }
+            }
+        }
+    }
+});
+
+// Herd Pie Chart
+const herdCtx = document.getElementById('herdChart').getContext('2d');
+new Chart(herdCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Lactating', 'Pregnant', 'Sick', 'Others'],
+        datasets: [{
+            data: [{{ lactating }}, {{ pregnant }}, {{ sick }}, Math.max(0, {{ total_cows }} - {{ lactating }} - {{ pregnant }} - {{ sick }})],
+            backgroundColor: ['#2d9e62', '#be185d', '#dc2626', '#9ca3af'],
+            borderWidth: 0,
+            hoverOffset: 4
+        }]
+    },
+    options: {
+        responsive: true,
+        cutout: '65%',
+        plugins: { legend: { display: false } }
+    }
+});
+</script>
+{% endblock %}
