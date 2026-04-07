@@ -3,6 +3,7 @@ from django.utils import timezone
 from twilio.rest import Client
 from twilio.base.exceptions import TwilioRestException
 
+
 def send_notification(reminder):
     """
     Send a WhatsApp via Twilio for a given SMSReminder instance.
@@ -22,7 +23,8 @@ def send_notification(reminder):
     from_whatsapp = 'whatsapp:+14155238886' 
 
     try:
-        client = Client(account_sid, auth_token)
+        
+        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
 
         # 4. Create the WhatsApp message
         message = client.messages.create(
